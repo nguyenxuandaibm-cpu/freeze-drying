@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Máy Sấy Lạnh - Giám Sát</title>
+
+    <!-- Cấu hình hiển thị dạng Web App trên iPhone (iOS) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Máy Sấy Lạnh">
+    
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --temp-color: #e74c3c;
+            --hum-color: #3498db;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background-color: #e0e0e0;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .status-badge.online {
+            background-color: #e8f8f5;
+            color: #2ec4b6;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .temp-val { color: var(--temp-color); }
+        .hum-val { color: var(--hum-color); }
+
+        .unit {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        .charts-container {
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chart-box {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 220px;
+            border: none;
+        }
+
+        .footer {
+            margin-top: auto;
+            padding-top: 20px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>MÁY SẤY LẠNH</h1>
+        <div id="status" class="status-badge">Đang kết nối...</div>
+    </div>
+
+    <!-- Hiển thị giá trị số -->
+    <div class="card-container">
+        <div class="card">
+            <div class="card-title">Nhiệt độ</div>
+            <div class="card-value temp-val"><span id="temp">--</span><span class="unit">°C</span></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Độ ẩm</div>
+            <div class="card-value hum-val"><span id="hum">--</span><span class="unit">%</span></div>
+        </div>
+    </div>
+
+    <!-- Nhúng biểu đồ trực tiếp từ ThingSpeak -->
+    <div class="charts-container">
+        <div class="chart-box">
+            <iframe id="chart-temp" src=""></iframe>
+        </div>
+        <div class="chart-box">
+            <iframe id="chart-hum" src=""></iframe>
+        </div>
+    </div>
+
+    <div class="footer" id="last-update">Cập nhật lần cuối: --:--:--</div>
+
+    <script>
+        // ==================== CẤU HÌNH THÔNG SỐ ====================
+        // Thay ID Channel ThingSpeak của bạn vào đây (ví dụ: '2345678')
+        const CHANNEL_ID = '3522733'; 
+        // ============================================================
+
+        // Cập nhật URL biểu đồ
+        document.getElementById('chart-temp').src = `https://thingspeak.com/channels/${CHANNEL_ID}/charts/1?bgcolor=%23ffffff&color=%23e74c3c&dynamic=true&type=line&title=Bi%E1%BB%83u+%C4%91%E1%BB%93+Nhi%E1%BB%87t+%C4%90%E1%BB%99`;
+        document.getElementById('chart-hum').src = `https://thingspeak.com/channels/${CHANNEL_ID}/charts/2?bgcolor=%23ffffff&color=%233498db&dynamic=true&type=line&title=Bi%E1%BB%83u+%C4%91%E1%BB%93+%C4%90%E1%BB%99+%E1%BA%A8m`;
+
+        async function updateData() {
+            try {
+                const response = await fetch(`https://api.thingspeak.com/channels/${CHANNEL_ID}/feeds/last.json`);
+                if (!response.ok) throw new Error('Không thể lấy dữ liệu');
+                
+                const data = await response.json();
+
+                // Cập nhật Nhiệt độ & Độ ẩm
+                const tempVal = parseFloat(data.field1).toFixed(1);
+                const humVal = parseFloat(data.field2).toFixed(1);
+
+                document.getElementById('temp').innerText = isNaN(tempVal) ? '--' : tempVal;
+                document.getElementById('hum').innerText = isNaN(humVal) ? '--' : humVal;
+
+                // Cập nhật thời gian
+                const updateTime = new Date(data.created_at).toLocaleTimeString('vi-VN');
+                document.getElementById('last-update').innerText = `Cập nhật lần cuối: ${updateTime}`;
+
+                // Trạng thái hoạt động
+                const statusElem = document.getElementById('status');
+                statusElem.innerText = 'Trực tuyến';
+                statusElem.classList.add('online');
+
+            } catch (error) {
+                console.error('Lỗi API:', error);
+                const statusElem = document.getElementById('status');
+                statusElem.innerText = 'Mất kết nối';
+                statusElem.classList.remove('online');
+            }
+        }
+
+        // Tải dữ liệu ngay khi mở trang
+        updateData();
+
+        // Tự động làm mới số liệu mỗi 15 giây
+        setInterval(updateData, 15000);
+    </script>
+</body>
+</html>
