@@ -2,63 +2,143 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Giám Sát Máy Sấy Lạnh</title>
-  <!-- CẤU HÌNH BIẾN WEB THÀNH APP TRÊN IPHONE (iOS) -->
+
+  <!-- Cấu hình biến Web thành App trên iPhone/Android (PWA) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Máy Sấy Lạnh">
-  
-  <!-- Icon hiển thị ngoài màn hình chính iPhone (Tùy chọn) -->
   <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/thermometer.png">
+
+  <!-- Thư viện Firebase JS SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- Thư viện Chart.js để vẽ biểu đồ -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #f0f2f5; padding: 20px; }
-    .container { max-width: 400px; margin: auto; }
-    .card { background: white; padding: 20px; margin: 15px 0; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-    .value { font-size: 2.8em; font-weight: bold; color: #1877f2; }
-    .humidity { color: #42b72a; }
-    .status { font-size: 0.9em; color: #65676b; margin-top: 10px; }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h2 { margin: 0; color: #1a202c; font-size: 1.5rem; }
+    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; margin-top: 6px; background-color: #e2e8f0; color: #4a5568; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 600px; margin: 0 auto 20px auto; }
+    .card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .card h3 { margin: 0 0 8px 0; font-size: 0.95rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+    .value { font-size: 2rem; font-weight: 700; color: #2b6cb0; }
+    .value.hum { color: #2f855a; }
+
+    .chart-container { background: white; border-radius: 12px; padding: 15px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h2>HỆ THỐNG GIÁM SÁT MÁY SẤY LẠNH</h2>
+  <div class="header">
+    <h2>MÁY SẤY LẠNH INDUSTRIAL</h2>
+    <div id="status" class="status-badge">Đang kết nối Firebase...</div>
+  </div>
 
+  <div class="grid">
     <div class="card">
-      <h3>Nhiệt Độ Buồng Sấy</h3>
+      <h3>Nhiệt Độ</h3>
       <div id="temp" class="value">-- °C</div>
     </div>
-
     <div class="card">
-      <h3>Độ Ẩm Buồng Sấy</h3>
-      <div id="hum" class="value humidity">-- %</div>
+      <h3>Độ Ẩm</h3>
+      <div id="hum" class="value hum">-- %</div>
     </div>
+  </div>
 
-    <div id="status" class="status">Đang kết nối tới Firebase...</div>
+  <div class="chart-container">
+    <canvas id="realtimeChart"></canvas>
   </div>
 
   <script>
-    // Điền chính xác URL Firebase của bạn
+    // 1. Cấu hình Firebase Database
     const firebaseConfig = {
       databaseURL: "https://freeze-drying-default-rtdb.firebaseio.com/"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Lắng nghe dữ liệu thời gian thực
+    // 2. Khởi tạo Biểu đồ Chart.js
+    const ctx = document.getElementById('realtimeChart').getContext('2d');
+    const maxDataPoints = 20; // Giới hạn hiển thị 20 điểm dữ liệu gần nhất
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: 'Nhiệt độ (°C)',
+            data: [],
+            borderColor: '#e53e3e',
+            backgroundColor: 'rgba(229, 62, 62, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Độ ẩm (%)',
+            data: [],
+            borderColor: '#38a169',
+            backgroundColor: 'rgba(56, 161, 105, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          x: { display: true, title: { display: false } },
+          y: { beginAtZero: false }
+        }
+      }
+    });
+
+    // 3. Lắng nghe dữ liệu thời gian thực từ Firebase Node /may_say
     db.ref('/may_say').on('value', (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        document.getElementById('temp').innerText = data.nhiet_do.toFixed(1) + ' °C';
-        document.getElementById('hum').innerText = data.do_am.toFixed(1) + ' %';
-        document.getElementById('status').innerText = 'Trạng thái: Trực tuyến (Thời gian thực)';
+        const temp = parseFloat(data.nhiet_do);
+        const hum = parseFloat(data.do_am);
+        const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        // Cập nhật số liệu trên Card
+        document.getElementById('temp').innerText = temp.toFixed(1) + ' °C';
+        document.getElementById('hum').innerText = hum.toFixed(1) + ' %';
+        
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = '● Trực tuyến (Real-time)';
+        statusEl.style.backgroundColor = '#c6f6d5';
+        statusEl.style.color = '#22543d';
+
+        // Cập nhật dữ liệu vào Biểu đồ
+        if (chart.data.labels.length >= maxDataPoints) {
+          chart.data.labels.shift();
+          chart.data.datasets[0].data.shift();
+          chart.data.datasets[1].data.shift();
+        }
+
+        chart.data.labels.push(now);
+        chart.data.datasets[0].data.push(temp);
+        chart.data.datasets[1].data.push(hum);
+        chart.update();
       }
     }, (error) => {
-      document.getElementById('status').innerText = 'Lỗi kết nối Firebase: ' + error.message;
+      const statusEl = document.getElementById('status');
+      statusEl.innerText = 'Lỗi: ' + error.message;
+      statusEl.style.backgroundColor = '#fed7d7';
+      statusEl.style.color = '#742a2a';
     });
   </script>
 </body>
