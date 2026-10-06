@@ -23,13 +23,13 @@
     body { background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
     .header { text-align: center; margin-bottom: 20px; }
     .header h2 { margin: 0; color: #1a202c; font-size: 1.5rem; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; margin-top: 6px; background-color: #e2e8f0; color: #4a5568; }
+    .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-top: 8px; background-color: #e2e8f0; color: #4a5568; transition: all 0.3s ease; }
     
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 600px; margin: 0 auto 20px auto; }
     .card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .card h3 { margin: 0 0 8px 0; font-size: 0.95rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
-    .value { font-size: 2rem; font-weight: 700; color: #2b6cb0; }
-    .value.hum { color: #2f855a; }
+    .card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
+    .value { font-size: 2rem; font-weight: 700; color: #e53e3e; }
+    .value.hum { color: #38a169; }
 
     .chart-container { background: white; border-radius: 12px; padding: 15px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
   </style>
@@ -66,7 +66,7 @@
 
     // 2. Khởi tạo Biểu đồ Chart.js
     const ctx = document.getElementById('realtimeChart').getContext('2d');
-    const maxDataPoints = 20; // Giới hạn hiển thị 20 điểm dữ liệu gần nhất
+    const maxDataPoints = 20; // Giới hạn hiển thị 20 điểm dữ liệu mới nhất
 
     const chart = new Chart(ctx, {
       type: 'line',
@@ -99,28 +99,44 @@
           legend: { position: 'top' }
         },
         scales: {
-          x: { display: true, title: { display: false } },
+          x: { display: true },
           y: { beginAtZero: false }
         }
       }
     });
 
-    // 3. Lắng nghe dữ liệu thời gian thực từ Firebase Node /may_say
+    // 3. Biến theo dõi thời gian cập nhật dữ liệu gần nhất
+    let lastUpdateTech = 0;
+
+    // Hàm cập nhật hiển thị trạng thái Trực tuyến / Ngoại tuyến
+    function setOnlineStatus(isOnline) {
+      const statusEl = document.getElementById('status');
+      if (isOnline) {
+        statusEl.innerText = '● Trực tuyến (Real-time)';
+        statusEl.style.backgroundColor = '#c6f6d5';
+        statusEl.style.color = '#22543d';
+      } else {
+        statusEl.innerText = '○ Mất kết nối (Offline)';
+        statusEl.style.backgroundColor = '#fed7d7';
+        statusEl.style.color = '#742a2a';
+      }
+    }
+
+    // 4. Lắng nghe dữ liệu thời gian thực từ Firebase Node /may_say
     db.ref('/may_say').on('value', (snapshot) => {
       const data = snapshot.val();
-      if (data) {
+      if (data && data.nhiet_do !== undefined && data.do_am !== undefined) {
         const temp = parseFloat(data.nhiet_do);
         const hum = parseFloat(data.do_am);
         const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-        // Cập nhật số liệu trên Card
+        // Cập nhật số liệu trên thẻ hiển thị
         document.getElementById('temp').innerText = temp.toFixed(1) + ' °C';
         document.getElementById('hum').innerText = hum.toFixed(1) + ' %';
-        
-        const statusEl = document.getElementById('status');
-        statusEl.innerText = '● Trực tuyến (Real-time)';
-        statusEl.style.backgroundColor = '#c6f6d5';
-        statusEl.style.color = '#22543d';
+
+        // Đánh dấu thời điểm nhận dữ liệu gần nhất
+        lastUpdateTech = Date.now();
+        setOnlineStatus(true);
 
         // Cập nhật dữ liệu vào Biểu đồ
         if (chart.data.labels.length >= maxDataPoints) {
@@ -136,10 +152,17 @@
       }
     }, (error) => {
       const statusEl = document.getElementById('status');
-      statusEl.innerText = 'Lỗi: ' + error.message;
+      statusEl.innerText = 'Lỗi kết nối: ' + error.message;
       statusEl.style.backgroundColor = '#fed7d7';
       statusEl.style.color = '#742a2a';
     });
+
+    // 5. Bộ đếm tự động kiểm tra xem ESP32 có ngắt kết nối không (Mỗi 2.5 giây)
+    setInterval(() => {
+      if (lastUpdateTech > 0 && (Date.now() - lastUpdateTech > 3000)) {
+        setOnlineStatus(false);
+      }
+    }, 1500);
   </script>
 </body>
 </html>
