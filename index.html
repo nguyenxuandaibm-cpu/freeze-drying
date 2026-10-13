@@ -1,168 +1,808 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Giám Sát Máy Sấy Lạnh</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát & Điều Khiển 3D Máy Sấy Lạnh Tổ Yến</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP for smooth animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-  <!-- Cấu hình biến Web thành App trên iPhone/Android (PWA) -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Máy Sấy Lạnh">
-  <link rel="apple-touch-icon" href="https://img.icons8.com/color/180/thermometer.png">
-
-  <!-- Thư viện Firebase JS SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <!-- Thư viện Chart.js để vẽ biểu đồ -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
-    .header { text-align: center; margin-bottom: 20px; }
-    .header h2 { margin: 0; color: #1a202c; font-size: 1.5rem; }
-    .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-top: 8px; background-color: #e2e8f0; color: #4a5568; transition: all 0.3s ease; }
-    
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 600px; margin: 0 auto 20px auto; }
-    .card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }
-    .value { font-size: 2rem; font-weight: 700; color: #e53e3e; }
-    .value.hum { color: #38a169; }
-
-    .chart-container { background: white; border-radius: 12px; padding: 15px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-  </style>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f8fafc;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .glass-panel-interactive {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-panel-interactive:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.25);
+        }
+        .leader-line {
+            stroke: #38bdf8;
+            stroke-width: 1.8;
+            stroke-dasharray: 4 4;
+            fill: none;
+            opacity: 0.8;
+            filter: drop-shadow(0 0 4px #0284c7);
+            animation: dash 30s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: -1000; }
+        }
+        .leader-point {
+            fill: #38bdf8;
+            filter: drop-shadow(0 0 8px #38bdf8);
+            animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            0% { r: 3.5; opacity: 1; }
+            50% { r: 7; opacity: 0.4; }
+            100% { r: 3.5; opacity: 1; }
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0b1329; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    </style>
 </head>
-<body>
+<body class="flex flex-col h-screen overflow-hidden relative select-none">
 
-  <div class="header">
-    <h2>MÁY SẤY LẠNH INDUSTRIAL</h2>
-    <div id="status" class="status-badge">Đang kết nối Firebase...</div>
-  </div>
+    <!-- Header SCADA Bar -->
+    <header class="glass-panel border-b border-slate-800/80 px-6 py-3 flex justify-between items-center z-30 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
+                <i class="fa-solid fa-cube text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                    SCADA 3D Máy Sấy Lạnh Tổ Yến 
+                    <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Hệ Thống Thực Tế</span>
+                </h1>
+                <p class="text-xs text-slate-400">Điều khiển tương tác 3D - Giám sát thời gian thực</p>
+            </div>
+        </div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>Nhiệt Độ</h3>
-      <div id="temp" class="value">-- °C</div>
+        <div class="flex items-center gap-4">
+            <button onclick="resetCameraView()" class="px-3.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-2 transition active:scale-95 shadow">
+                <i class="fa-solid fa-arrows-to-eye text-cyan-400"></i>
+                <span>Khôi Phục Góc Nhìn</span>
+            </button>
+            <div class="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Hệ Thống Bật</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Viewport Container -->
+    <main class="relative flex-1 w-full h-full overflow-hidden">
+        
+        <!-- 3D WebGL Canvas Layer -->
+        <div id="canvas-container" class="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing"></div>
+
+        <!-- SVG Leader Lines Dynamic Overlay -->
+        <svg id="svg-overlay" class="absolute inset-0 w-full h-full pointer-events-none z-10">
+            <!-- Line 1: Inlet Sensor -->
+            <path id="line-inlet" class="leader-line" d="M0 0 L0 0" />
+            <circle id="point-inlet" class="leader-point" cx="0" cy="0" />
+
+            <!-- Line 2: Chamber Sensor -->
+            <path id="line-chamber" class="leader-line" d="M0 0 L0 0" />
+            <circle id="point-chamber" class="leader-point" cx="0" cy="0" />
+
+            <!-- Line 3: Exhaust Fan -->
+            <path id="line-exhaust" class="leader-line" d="M0 0 L0 0" />
+            <circle id="point-exhaust" class="leader-point" cx="0" cy="0" />
+        </svg>
+
+        <!-- UI Callout Overlay Panels -->
+        <div class="absolute inset-0 z-20 pointer-events-none p-6 flex justify-between items-stretch">
+            
+            <!-- LEFT COLUMN: Inlet parameters & Main Control -->
+            <div class="w-80 flex flex-col justify-between pointer-events-auto space-y-4">
+                
+                <!-- Inlet Card (Cold Air Intake / Compressor) -->
+                <div id="card-inlet" onclick="focusSection('inlet')" class="glass-panel glass-panel-interactive rounded-2xl p-4 cursor-pointer group">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-snowflake"></i> 1. Dàn Lạnh (Khí Đầu Vào)
+                        </span>
+                        <i class="fa-solid fa-magnifying-glass-plus text-xs text-slate-500 group-hover:text-cyan-400 transition"></i>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Nhiệt Độ</span>
+                            <p class="text-xl font-bold text-white font-mono" id="dispInTemp">12.0°C</p>
+                        </div>
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Độ Ẩm Khí</span>
+                            <p class="text-xl font-bold text-blue-400 font-mono" id="dispInHumi">78.5%</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-cyan-400/80 mt-2 text-center font-medium"><i class="fa-solid fa-hand-pointer mr-1"></i> Bấm để zoom & cài đặt</p>
+                </div>
+
+                <!-- UV & Fan Control Center -->
+                <div class="glass-panel rounded-2xl p-4 space-y-4 mt-auto">
+                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-cyan-400"></i> Điều Khiển Thiết Bị
+                    </h2>
+
+                    <!-- UV Toggle Switch -->
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="flex items-center space-x-3">
+                            <div id="uvIconBox" class="w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center transition-all duration-300 shadow-inner">
+                                <i class="fa-solid fa-lightbulb text-base"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-white">Đèn Tệt Trùng UV</p>
+                                <p class="text-[10px] text-slate-400" id="uvStatusText">Đang Bật (Chiếu Sáng Tím)</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="uvToggle" checked class="sr-only peer" onchange="toggleUVLight(this.checked)">
+                            <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500"></div>
+                        </label>
+                    </div>
+
+                    <!-- Exhaust Fan Speed Slider -->
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800" id="card-exhaust" onclick="focusSection('exhaust')">
+                        <div class="flex justify-between items-center mb-1.5 cursor-pointer">
+                            <span class="text-xs font-semibold text-slate-300">Quạt Hút Tuần Hoàn</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono font-bold" id="fanSpeedDisp">85%</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="85" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400" oninput="updateFanSpeed(this.value)">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Chamber & Drying Status -->
+            <div class="w-80 flex flex-col justify-between pointer-events-auto space-y-4">
+
+                <!-- Chamber Parameter Card -->
+                <div id="card-chamber" onclick="focusSection('chamber')" class="glass-panel glass-panel-interactive rounded-2xl p-4 cursor-pointer group">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-box-open"></i> 2. Buồng Sấy Tổ Yến
+                        </span>
+                        <i class="fa-solid fa-magnifying-glass-plus text-xs text-slate-500 group-hover:text-cyan-400 transition"></i>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Nhiệt Buồng Sấy</span>
+                            <p class="text-xl font-bold text-white font-mono" id="dispChamberTemp">18.5°C</p>
+                        </div>
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                            <span class="text-[10px] text-slate-400 uppercase font-medium">Độ Ẩm Tách Được</span>
+                            <p class="text-xl font-bold text-cyan-400 font-mono" id="dispChamberHumi">35.2%</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-300">
+                        <span>Số Khai Sấy Yến:</span>
+                        <span class="font-bold text-cyan-400 font-mono">10 Khay Inox</span>
+                    </div>
+                    <p class="text-[10px] text-cyan-400/80 mt-2 text-center font-medium"><i class="fa-solid fa-hand-pointer mr-1"></i> Bấm để zoom khoang yến</p>
+                </div>
+
+                <!-- Timer & Cycle Progress -->
+                <div class="glass-panel rounded-2xl p-4 space-y-3 mt-auto">
+                    <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch text-cyan-400"></i> Thời Gian Sấy Tự Động
+                    </h2>
+                    <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs text-slate-400">Thời Gian Đã Cài</span>
+                            <span class="text-base font-bold text-cyan-400 font-mono" id="timerDisplay">24:00:00</span>
+                        </div>
+                        <input type="range" min="2" max="48" step="1" value="24" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400" oninput="updateDryTime(this.value)">
+                        <div class="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
+                            <span>02h</span>
+                            <span>24h</span>
+                            <span>48h</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Parameter Modal Popup -->
+    <div id="paramModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-cyan-500/40 relative animate-in fade-in zoom-in duration-200">
+            <button onclick="closePopup()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-5">
+                <div id="modalIcon" class="w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white" id="modalTitle">Cài Đặt Thông Số</h3>
+                    <p class="text-xs text-slate-400" id="modalSubtitle">Điều chỉnh giá trị setpoint thời gian thực</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Param 1 -->
+                <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-slate-300 uppercase" id="labelVal1">Nhiệt Độ (°C)</span>
+                        <span class="text-lg font-bold text-cyan-400 font-mono" id="modalVal1Text">18.5°C</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="adjustModalValue(1, -0.5)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition shadow border border-slate-700 active:scale-95"><i class="fa-solid fa-minus"></i></button>
+                        <input type="range" id="rangeVal1" min="5" max="40" step="0.5" value="18.5" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-400" oninput="syncModalValue(1, this.value)">
+                        <button onclick="adjustModalValue(1, 0.5)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition shadow border border-slate-700 active:scale-95"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <!-- Param 2 -->
+                <div id="containerParam2" class="p-4 rounded-xl bg-slate-900/80 border border-slate-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-slate-300 uppercase" id="labelVal2">Độ Ẩm (%)</span>
+                        <span class="text-lg font-bold text-blue-400 font-mono" id="modalVal2Text">35.0%</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="adjustModalValue(2, -1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition shadow border border-slate-700 active:scale-95"><i class="fa-solid fa-minus"></i></button>
+                        <input type="range" id="rangeVal2" min="10" max="95" step="1" value="35" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-400" oninput="syncModalValue(2, this.value)">
+                        <button onclick="adjustModalValue(2, 1)" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold flex items-center justify-center transition shadow border border-slate-700 active:scale-95"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button onclick="closePopup()" class="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-cyan-600/20 flex items-center justify-center gap-2 active:scale-98">
+                        <i class="fa-solid fa-check"></i> Lưu & Áp Dụng
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="card">
-      <h3>Độ Ẩm</h3>
-      <div id="hum" class="value hum">-- %</div>
-    </div>
-  </div>
 
-  <div class="chart-container">
-    <canvas id="realtimeChart"></canvas>
-  </div>
+    <script>
+        // Global State
+        const state = {
+            inTemp: 12.0,
+            inHumi: 78.5,
+            chamberTemp: 18.5,
+            chamberHumi: 35.2,
+            fanSpeed: 85,
+            dryTime: 24,
+            uvActive: true,
+            activeSection: null
+        };
 
-  <script>
-    // 1. Cấu hình Firebase Database
-    const firebaseConfig = {
-      databaseURL: "https://freeze-drying-default-rtdb.firebaseio.com/"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+        // Three.js variables
+        let scene, camera, renderer;
+        let uvLight, uvLight2, uvMaterials = [];
+        let fanBladesMesh;
+        let targetCameraPos = { x: 4.8, y: 3.2, z: 5.5 };
+        let targetLookAt = { x: 0, y: 0.2, z: 0 };
+        let currentLookAt = { x: 0, y: 0.2, z: 0 };
 
-    // 2. Khởi tạo Biểu đồ Chart.js
-    const ctx = document.getElementById('realtimeChart').getContext('2d');
-    const maxDataPoints = 20; // Giới hạn hiển thị 20 điểm dữ liệu mới nhất
+        // 3D Anchor positions for leader lines
+        const anchors = {
+            inlet: new THREE.Vector3(1.1, -0.4, 0.4),      // Compressor / Cold coil area
+            chamber: new THREE.Vector3(-0.6, 0.3, 0.2),     // Middle of bird nest trays
+            exhaust: new THREE.Vector3(1.1, 0.9, -0.2)      // Exhaust fan / top control
+        };
 
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: [],
-        datasets: [
-          {
-            label: 'Nhiệt độ (°C)',
-            data: [],
-            borderColor: '#e53e3e',
-            backgroundColor: 'rgba(229, 62, 62, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-          },
-          {
-            label: 'Độ ẩm (%)',
-            data: [],
-            borderColor: '#38a169',
-            backgroundColor: 'rgba(56, 161, 105, 0.1)',
-            borderWidth: 2,
-            tension: 0.3,
-            fill: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'top' }
-        },
-        scales: {
-          x: { display: true },
-          y: { beginAtZero: false }
+        // Default camera perspectives
+        const views = {
+            default: { pos: { x: 4.8, y: 3.2, z: 5.5 }, target: { x: 0, y: 0.2, z: 0 } },
+            inlet: { pos: { x: 3.2, y: 0.8, z: 3.0 }, target: { x: 1.1, y: -0.4, z: 0.4 } },
+            chamber: { pos: { x: -0.5, y: 0.5, z: 3.8 }, target: { x: -0.6, y: 0.3, z: 0 } },
+            exhaust: { pos: { x: 2.2, y: 2.2, z: 2.8 }, target: { x: 1.1, y: 0.9, z: -0.2 } }
+        };
+
+        window.onload = function() {
+            init3D();
+            animate();
+            setupInteractivity();
+            window.addEventListener('resize', onWindowResize);
+        };
+
+        // Initialize Three.js Scene
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x090d16);
+            scene.fog = new THREE.FogExp2(0x090d16, 0.08);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(views.default.pos.x, views.default.pos.y, views.default.pos.z);
+            camera.lookAt(views.default.target.x, views.default.target.y, views.default.target.z);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(5, 8, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            scene.add(dirLight);
+
+            const blueFillLight = new THREE.DirectionalLight(0x38bdf8, 0.6);
+            blueFillLight.position.set(-5, 3, -5);
+            scene.add(blueFillLight);
+
+            // UV Internal Glow Lights
+            uvLight = new THREE.PointLight(0x818cf8, 3.5, 4);
+            uvLight.position.set(-0.6, 0.5, 0);
+            scene.add(uvLight);
+
+            uvLight2 = new THREE.PointLight(0x38bdf8, 2.0, 3);
+            uvLight2.position.set(-0.6, -0.2, 0);
+            scene.add(uvLight2);
+
+            // Floor Platform with grid
+            const gridHelper = new THREE.GridHelper(12, 24, 0x334155, 0x1e293b);
+            gridHelper.position.y = -1.5;
+            scene.add(gridHelper);
+
+            // Build Machine Geometry
+            buildColdDryerMachine();
         }
-      }
-    });
 
-    // 3. Biến theo dõi thời gian cập nhật dữ liệu gần nhất
-    let lastUpdateTech = 0;
+        function buildColdDryerMachine() {
+            const machineGroup = new THREE.Group();
 
-    // Hàm cập nhật hiển thị trạng thái Trực tuyến / Ngoại tuyến
-    function setOnlineStatus(isOnline) {
-      const statusEl = document.getElementById('status');
-      if (isOnline) {
-        statusEl.innerText = '● Trực tuyến (Real-time)';
-        statusEl.style.backgroundColor = '#c6f6d5';
-        statusEl.style.color = '#22543d';
-      } else {
-        statusEl.innerText = '○ Mất kết nối (Offline)';
-        statusEl.style.backgroundColor = '#fed7d7';
-        statusEl.style.color = '#742a2a';
-      }
-    }
+            // Materials
+            const metalMat = new THREE.MeshStandardMaterial({
+                color: 0xc0c7d0,
+                metalness: 0.85,
+                roughness: 0.25
+            });
+            const darkMetalMat = new THREE.MeshStandardMaterial({
+                color: 0x2d3748,
+                metalness: 0.7,
+                roughness: 0.4
+            });
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0xe0f2fe,
+                transparent: true,
+                opacity: 0.25,
+                roughness: 0.1,
+                transmission: 0.85,
+                thickness: 0.2
+            });
+            const trayMat = new THREE.MeshStandardMaterial({
+                color: 0xd1d5db,
+                metalness: 0.9,
+                roughness: 0.2,
+                wireframe: false
+            });
+            const uvGlowMat = new THREE.MeshBasicMaterial({
+                color: 0x818cf8,
+                transparent: true,
+                opacity: 0.8
+            });
+            uvMaterials.push(uvGlowMat);
 
-    // 4. Lắng nghe dữ liệu thời gian thực từ Firebase Node /may_say
-    db.ref('/may_say').on('value', (snapshot) => {
-      const data = snapshot.val();
-      if (data && data.nhiet_do !== undefined && data.do_am !== undefined) {
-        const temp = parseFloat(data.nhiet_do);
-        const hum = parseFloat(data.do_am);
-        const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            // Yến Bird Nest Material (Organic look)
+            const nestMat = new THREE.MeshStandardMaterial({
+                color: 0xfef3c7,
+                roughness: 0.9,
+                bumpScale: 0.05
+            });
 
-        // Cập nhật số liệu trên thẻ hiển thị
-        document.getElementById('temp').innerText = temp.toFixed(1) + ' °C';
-        document.getElementById('hum').innerText = hum.toFixed(1) + ' %';
+            // 1. MAIN CHAMBERS (Bird Nest Storage Left + Machine Right)
+            // Left Main Drying Chamber Box
+            const chamberGeo = new THREE.BoxGeometry(2.2, 2.4, 1.8);
+            const chamberMesh = new THREE.Mesh(chamberGeo, glassMat);
+            chamberMesh.position.set(-0.6, 0, 0);
+            machineGroup.add(chamberMesh);
 
-        // Đánh dấu thời điểm nhận dữ liệu gần nhất
-        lastUpdateTech = Date.now();
-        setOnlineStatus(true);
+            // Right Machinery Compartment (Solid metal frame)
+            const machBoxGeo = new THREE.BoxGeometry(1.2, 2.4, 1.8);
+            const machBoxMesh = new THREE.Mesh(machBoxGeo, darkMetalMat);
+            machBoxMesh.position.set(1.1, 0, 0);
+            machineGroup.add(machBoxMesh);
 
-        // Cập nhật dữ liệu vào Biểu đồ
-        if (chart.data.labels.length >= maxDataPoints) {
-          chart.data.labels.shift();
-          chart.data.datasets[0].data.shift();
-          chart.data.datasets[1].data.shift();
+            // 2. EXTRUDED ALUMINUM FRAME (Pillar Beams)
+            function addBeam(w, h, d, x, y, z) {
+                const beamGeo = new THREE.BoxGeometry(w, h, d);
+                const beamMesh = new THREE.Mesh(beamGeo, metalMat);
+                beamMesh.position.set(x, y, z);
+                beamMesh.castShadow = true;
+                machineGroup.add(beamMesh);
+            }
+
+            const th = 0.08; // Beam thickness
+            // Vertical corners
+            addBeam(th, 2.42, th, -1.7, 0, 0.9);
+            addBeam(th, 2.42, th, 0.5, 0, 0.9);
+            addBeam(th, 2.42, th, -1.7, 0, -0.9);
+            addBeam(th, 2.42, th, 0.5, 0, -0.9);
+
+            addBeam(th, 2.42, th, 1.7, 0, 0.9);
+            addBeam(th, 2.42, th, 1.7, 0, -0.9);
+
+            // Horizontal Top & Bottom Beams
+            addBeam(3.48, th, th, 0, 1.2, 0.9);
+            addBeam(3.48, th, th, 0, -1.2, 0.9);
+            addBeam(3.48, th, th, 0, 1.2, -0.9);
+            addBeam(3.48, th, th, 0, -1.2, -0.9);
+
+            // 3. BIRD NEST TRAYS & NESTS (10 Tiered Stainless Trays)
+            const trayCount = 8;
+            const trayStartY = -0.9;
+            const trayGap = 0.22;
+
+            for (let i = 0; i < trayCount; i++) {
+                const trayY = trayStartY + (i * trayGap);
+                
+                // Stainless tray rim
+                const tFrameGeo = new THREE.BoxGeometry(1.9, 0.03, 1.5);
+                const tFrame = new THREE.Mesh(tFrameGeo, trayMat);
+                tFrame.position.set(-0.6, trayY, 0);
+                machineGroup.add(tFrame);
+
+                // Individual Bird Nests on Trays (Small Cup Spheres)
+                for (let nx = -0.6; nx <= 0.6; nx += 0.4) {
+                    for (let nz = -0.5; nz <= 0.5; nz += 0.5) {
+                        const nestGeo = new THREE.SphereGeometry(0.09, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.6);
+                        const nest = new THREE.Mesh(nestGeo, nestMat);
+                        nest.position.set(-0.6 + nx, trayY + 0.04, nz);
+                        nest.rotation.x = Math.PI;
+                        machineGroup.add(nest);
+                    }
+                }
+            }
+
+            // 4. UV LIGHT LED STRIPS (Vertical Purple Glow Rods)
+            const uvRodGeo = new THREE.CylinderGeometry(0.02, 0.02, 2.1);
+            const uvRod1 = new THREE.Mesh(uvRodGeo, uvGlowMat);
+            uvRod1.position.set(-1.6, 0, 0.8);
+            machineGroup.add(uvRod1);
+
+            const uvRod2 = new THREE.Mesh(uvRodGeo, uvGlowMat);
+            uvRod2.position.set(-1.6, 0, -0.8);
+            machineGroup.add(uvRod2);
+
+            // 5. TOUCH CONTROL SCREEN (Mounted on right compartment)
+            const screenFrameGeo = new THREE.BoxGeometry(0.02, 0.7, 0.5);
+            const screenFrame = new THREE.Mesh(screenFrameGeo, darkMetalMat);
+            screenFrame.position.set(1.71, 0.4, 0.3);
+            machineGroup.add(screenFrame);
+
+            const screenGlassGeo = new THREE.BoxGeometry(0.01, 0.62, 0.44);
+            const screenGlassMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+            const screenGlass = new THREE.Mesh(screenGlassGeo, screenGlassMat);
+            screenGlass.position.set(1.72, 0.4, 0.3);
+            machineGroup.add(screenGlass);
+
+            // 6. EXHAUST FAN ASSEMBLY (In Machine Side)
+            const fanHousingGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.1, 16);
+            const fanHousing = new THREE.Mesh(fanHousingGeo, darkMetalMat);
+            fanHousing.rotation.z = Math.PI / 2;
+            fanHousing.position.set(1.1, 0.8, -0.9);
+            machineGroup.add(fanHousing);
+
+            // Fan Blades
+            fanBladesMesh = new THREE.Group();
+            for (let b = 0; b < 4; b++) {
+                const bladeGeo = new THREE.BoxGeometry(0.02, 0.6, 0.1);
+                const blade = new THREE.Mesh(bladeGeo, metalMat);
+                blade.rotation.x = (b * Math.PI) / 4;
+                fanBladesMesh.add(blade);
+            }
+            fanBladesMesh.position.set(1.1, 0.8, -0.88);
+            machineGroup.add(fanBladesMesh);
+
+            // 7. WHEELS (Bottom Swivel Casters)
+            const wheelGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.08, 12);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 });
+            
+            const wheelPositions = [
+                [-1.6, -1.3, 0.8], [-1.6, -1.3, -0.8],
+                [1.6, -1.3, 0.8], [1.6, -1.3, -0.8]
+            ];
+
+            wheelPositions.forEach(p => {
+                const w = new THREE.Mesh(wheelGeo, wheelMat);
+                w.rotation.z = Math.PI / 2;
+                w.position.set(p[0], p[1], p[2]);
+                machineGroup.add(w);
+            });
+
+            scene.add(machineGroup);
         }
 
-        chart.data.labels.push(now);
-        chart.data.datasets[0].data.push(temp);
-        chart.data.datasets[1].data.push(hum);
-        chart.update();
-      }
-    }, (error) => {
-      const statusEl = document.getElementById('status');
-      statusEl.innerText = 'Lỗi kết nối: ' + error.message;
-      statusEl.style.backgroundColor = '#fed7d7';
-      statusEl.style.color = '#742a2a';
-    });
+        // Main Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
 
-    // 5. Bộ đếm tự động kiểm tra xem ESP32 có ngắt kết nối không (Mỗi 2.5 giây)
-    setInterval(() => {
-      if (lastUpdateTech > 0 && (Date.now() - lastUpdateTech > 3000)) {
-        setOnlineStatus(false);
-      }
-    }, 1500);
-  </script>
+            // Rotate Exhaust Fan based on speed
+            if (fanBladesMesh) {
+                fanBladesMesh.rotation.x += (state.fanSpeed / 100) * 0.2;
+            }
+
+            // Smooth Camera Interpolation (GSAP style lerp)
+            camera.position.x += (targetCameraPos.x - camera.position.x) * 0.05;
+            camera.position.y += (targetCameraPos.y - camera.position.y) * 0.05;
+            camera.position.z += (targetCameraPos.z - camera.position.z) * 0.05;
+
+            currentLookAt.x += (targetLookAt.x - currentLookAt.x) * 0.05;
+            currentLookAt.y += (targetLookAt.y - currentLookAt.y) * 0.05;
+            currentLookAt.z += (targetLookAt.z - currentLookAt.z) * 0.05;
+
+            camera.lookAt(currentLookAt.x, currentLookAt.y, currentLookAt.z);
+
+            // Render
+            renderer.render(scene, camera);
+
+            // Update SVG Leader lines pointing to 3D anchors
+            updateLeaderLines();
+        }
+
+        // Project 3D vector coordinates to 2D Screen Space
+        function toScreenPosition(vector3D) {
+            const vec = vector3D.clone();
+            vec.project(camera);
+            return {
+                x: (vec.x * 0.5 + 0.5) * window.innerWidth,
+                y: -(vec.y * 0.5 - 0.5) * window.innerHeight
+            };
+        }
+
+        // Update SVG Leader lines from UI Cards to 3D machine points
+        function updateLeaderLines() {
+            // 1. Inlet
+            updateSingleLine('card-inlet', anchors.inlet, 'line-inlet', 'point-inlet', 'right');
+            // 2. Chamber
+            updateSingleLine('card-chamber', anchors.chamber, 'line-chamber', 'point-chamber', 'left');
+            // 3. Exhaust
+            updateSingleLine('card-exhaust', anchors.exhaust, 'line-exhaust', 'point-exhaust', 'right');
+        }
+
+        function updateSingleLine(cardId, anchor3D, lineId, pointId, cardAnchorSide) {
+            const cardEl = document.getElementById(cardId);
+            const lineEl = document.getElementById(lineId);
+            const pointEl = document.getElementById(pointId);
+
+            if (!cardEl || !lineEl || !pointEl) return;
+
+            const cardRect = cardEl.getBoundingClientRect();
+            const target2D = toScreenPosition(anchor3D);
+
+            let startX = cardAnchorSide === 'right' ? cardRect.right : cardRect.left;
+            let startY = cardRect.top + cardRect.height / 2;
+
+            // Draw curved path
+            const midX = (startX + target2D.x) / 2;
+            const pathD = `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${target2D.y}, ${target2D.x} ${target2D.y}`;
+
+            lineEl.setAttribute('d', pathD);
+            pointEl.setAttribute('cx', target2D.x);
+            pointEl.setAttribute('cy', target2D.y);
+        }
+
+        function setupInteractivity() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+
+            const container = document.getElementById('canvas-container');
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const deltaX = e.clientX - previousMousePosition.x;
+                const deltaY = e.clientY - previousMousePosition.y;
+
+                // Subtle orbit rotation
+                targetCameraPos.x += deltaX * 0.01;
+                targetCameraPos.y -= deltaY * 0.01;
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('mouseup', () => { isDragging = false; });
+        }
+
+        function focusSection(section) {
+            state.activeSection = section;
+            const view = views[section] || views.default;
+
+            targetCameraPos = { ...view.pos };
+            targetLookAt = { ...view.target };
+
+            openPopup(section);
+        }
+
+        function resetCameraView() {
+            state.activeSection = null;
+            targetCameraPos = { ...views.default.pos };
+            targetLookAt = { ...views.default.target };
+        }
+
+        function toggleUVLight(active) {
+            state.uvActive = active;
+            const iconBox = document.getElementById('uvIconBox');
+            const statusText = document.getElementById('uvStatusText');
+
+            if (active) {
+                uvLight.intensity = 3.5;
+                uvLight2.intensity = 2.0;
+                uvMaterials.forEach(m => m.opacity = 0.8);
+                iconBox.className = "w-9 h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center transition-all duration-300 shadow-inner";
+                statusText.innerText = "Đang Bật (Chiếu Sáng Tím)";
+            } else {
+                uvLight.intensity = 0.2;
+                uvLight2.intensity = 0.1;
+                uvMaterials.forEach(m => m.opacity = 0.1);
+                iconBox.className = "w-9 h-9 rounded-xl bg-slate-800 text-slate-500 flex items-center justify-center transition-all duration-300";
+                statusText.innerText = "Đã Tắt";
+            }
+        }
+
+        function updateFanSpeed(val) {
+            state.fanSpeed = parseInt(val);
+            document.getElementById('fanSpeedDisp').innerText = val + '%';
+        }
+
+        function updateDryTime(val) {
+            state.dryTime = parseInt(val);
+            document.getElementById('timerDisplay').innerText = `${val}:00:00`;
+        }
+
+        function openPopup(section) {
+            const modal = document.getElementById('paramModal');
+            const title = document.getElementById('modalTitle');
+            const subtitle = document.getElementById('modalSubtitle');
+            
+            modal.classList.remove('hidden');
+
+            if (section === 'inlet') {
+                title.innerText = "Cài Đặt Dàn Lạnh (Khí Đầu Vào)";
+                subtitle.innerText = "Hiệu chỉnh nhiệt độ & độ ẩm khí vào dàn lạnh";
+                setupModalValues(state.inTemp, state.inHumi, 5, 30, 0.5, 40, 95, 1, 'Nhiệt Độ Vào (°C)', 'Độ Ẩm Vào (%)');
+            } else if (section === 'chamber') {
+                title.innerText = "Cài Đặt Khoang Sấy Tổ Yến";
+                subtitle.innerText = "Hiệu chỉnh nhiệt độ & độ ẩm tối ưu sấy yến";
+                setupModalValues(state.chamberTemp, state.chamberHumi, 10, 35, 0.5, 20, 80, 1, 'Nhiệt Buồng Sấy (°C)', 'Độ Ẩm Buồng Sấy (%)');
+            } else if (section === 'exhaust') {
+                title.innerText = "Cài Đặt Công Suất Quạt Hút";
+                subtitle.innerText = "Hiệu chỉnh lưu lượng gió tuần hoàn";
+                setupModalValues(state.fanSpeed, 0, 0, 100, 1, 0, 0, 1, 'Công Suất Quạt (%)', 'Phụ');
+            }
+        }
+
+        function setupModalValues(val1, val2, min1, max1, step1, min2, max2, step2, label1, label2) {
+            document.getElementById('labelVal1').innerText = label1;
+            document.getElementById('modalVal1Text').innerText = val1 + (label1.includes('%') ? '%' : '°C');
+            const r1 = document.getElementById('rangeVal1');
+            r1.min = min1; r1.max = max1; r1.step = step1; r1.value = val1;
+
+            const p2Container = document.getElementById('containerParam2');
+            if (label2 === 'Phụ') {
+                p2Container.style.display = 'none';
+            } else {
+                p2Container.style.display = 'block';
+                document.getElementById('labelVal2').innerText = label2;
+                document.getElementById('modalVal2Text').innerText = val2 + '%';
+                const r2 = document.getElementById('rangeVal2');
+                r2.min = min2; r2.max = max2; r2.step = step2; r2.value = val2;
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('paramModal').classList.add('hidden');
+        }
+
+        function adjustModalValue(paramIndex, delta) {
+            if (state.activeSection === 'inlet') {
+                if (paramIndex === 1) {
+                    state.inTemp = Math.max(5, Math.min(30, parseFloat((state.inTemp + delta).toFixed(1))));
+                    updateModalDisp(1, state.inTemp, '°C');
+                    document.getElementById('dispInTemp').innerText = state.inTemp + '°C';
+                } else {
+                    state.inHumi = Math.max(40, Math.min(95, parseFloat((state.inHumi + delta).toFixed(1))));
+                    updateModalDisp(2, state.inHumi, '%');
+                    document.getElementById('dispInHumi').innerText = state.inHumi + '%';
+                }
+            } else if (state.activeSection === 'chamber') {
+                if (paramIndex === 1) {
+                    state.chamberTemp = Math.max(10, Math.min(35, parseFloat((state.chamberTemp + delta).toFixed(1))));
+                    updateModalDisp(1, state.chamberTemp, '°C');
+                    document.getElementById('dispChamberTemp').innerText = state.chamberTemp + '°C';
+                } else {
+                    state.chamberHumi = Math.max(20, Math.min(80, parseFloat((state.chamberHumi + delta).toFixed(1))));
+                    updateModalDisp(2, state.chamberHumi, '%');
+                    document.getElementById('dispChamberHumi').innerText = state.chamberHumi + '%';
+                }
+            } else if (state.activeSection === 'exhaust') {
+                state.fanSpeed = Math.max(0, Math.min(100, parseInt(state.fanSpeed + (delta * 5))));
+                updateModalDisp(1, state.fanSpeed, '%');
+                document.getElementById('fanSpeedDisp').innerText = state.fanSpeed + '%';
+            }
+        }
+
+        function syncModalValue(paramIndex, val) {
+            const num = parseFloat(val);
+            if (state.activeSection === 'inlet') {
+                if (paramIndex === 1) {
+                    state.inTemp = num;
+                    updateModalDisp(1, num, '°C');
+                    document.getElementById('dispInTemp').innerText = num + '°C';
+                } else {
+                    state.inHumi = num;
+                    updateModalDisp(2, num, '%');
+                    document.getElementById('dispInHumi').innerText = num + '%';
+                }
+            } else if (state.activeSection === 'chamber') {
+                if (paramIndex === 1) {
+                    state.chamberTemp = num;
+                    updateModalDisp(1, num, '°C');
+                    document.getElementById('dispChamberTemp').innerText = num + '°C';
+                } else {
+                    state.chamberHumi = num;
+                    updateModalDisp(2, num, '%');
+                    document.getElementById('dispChamberHumi').innerText = num + '%';
+                }
+            } else if (state.activeSection === 'exhaust') {
+                state.fanSpeed = parseInt(num);
+                updateModalDisp(1, num, '%');
+                document.getElementById('fanSpeedDisp').innerText = num + '%';
+            }
+        }
+
+        function updateModalDisp(index, val, unit) {
+            document.getElementById(`modalVal${index}Text`).innerText = val + unit;
+            document.getElementById(`rangeVal${index}`).value = val;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    </script>
 </body>
 </html>
