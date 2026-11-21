@@ -915,6 +915,7 @@
         let lastRemotePushMs = 0;
         let lastRemoteActivityMs = 0;
         let lastHeartbeat = null;      // giá trị heartbeat gần nhất ESP32 gửi lên
+        let pendingProfileId = null;   // profile vừa gửi, chờ ESP32 xác nhận đã lưu
         let heartbeatSeen = false;     // đã nhận snapshot đầu tiên chưa
         const ESP_TIMEOUT_MS = 7000;   // quá 7s không đổi heartbeat => ESP32 offline
 
@@ -1163,6 +1164,12 @@
             lastHeartbeat = hb;
             markEsp32Active();
 
+            // ESP32 xác nhận đã nhận & lưu profile
+            if (pendingProfileId !== null && Number(data.profileApplied) === pendingProfileId) {
+                pendingProfileId = null;
+                showToast('ESP32 đã nhận & lưu profile — tự chạy theo cài đặt');
+            }
+
             const recentLocalCmd = (Date.now() - lastRemotePushMs) < 2500;
 
             // --- Cảm biến: chỉ hiện khi ESP32 báo sensorValid = 1 và có số thật ---
@@ -1188,7 +1195,13 @@
 
             if (!recentLocalCmd) {
                 if (typeof data.elapsedSeconds === 'number') state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
-                if (data.running !== undefined) state.isRunning = Number(data.running) === 1;
+                if (data.running !== undefined) {
+                    const nowRun = Number(data.running) === 1;
+                    if (state.isRunning && !nowRun && Number(data.finished) === 1) {
+                        showToast('Hết thời gian sấy — ESP32 đã tự động tắt toàn bộ');
+                    }
+                    state.isRunning = nowRun;
+                }
                 // Đồng bộ cả thông số cài đặt để mọi thiết bị mở web đều thấy giống ESP32
                 if (typeof data.targetTemp === 'number') state.targetTemp = data.targetTemp;
                 if (typeof data.targetHum === 'number') state.targetHum = data.targetHum;
@@ -1749,7 +1762,15 @@
             state.uvEndMin = parseInt(inputUvEnd.value, 10);
 
             if (state.esp32Connected) {
-                sendEsp32Command();
+                const pid = Date.now() % 2000000000;
+                pendingProfileId = pid;
+                sendEsp32Command({ profileId: pid });
+                setTimeout(() => {
+                    if (pendingProfileId === pid) {
+                        pendingProfileId = null;
+                        showToast('Chưa nhận xác nhận từ ESP32 — kiểm tra kết nối');
+                    }
+                }, 8000);
             } else {
                 showToast('ESP32 chưa online — cài đặt chưa được gửi');
             }
