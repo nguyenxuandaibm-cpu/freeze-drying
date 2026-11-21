@@ -10,8 +10,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-    <!-- MQTT.js CDN cho kết nối telemetry & điều khiển ESP32-C3 -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- Firebase SDK (Compat) cho kết nối Realtime Database với ESP32-C3 từ xa -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -516,17 +517,21 @@
                 </button>
 
                 <div class="flex items-center gap-2 shrink-0">
-                    <button id="playPauseBtn" type="button" aria-label="Tạm dừng hoặc tiếp tục"
-                        class="w-11 h-11 rounded-full bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs transition cursor-pointer">
+                    <button id="startTimerBtn" type="button" aria-label="Bắt đầu chu trình sấy" title="Bắt đầu chạy thời gian sấy"
+                        class="px-3 h-11 rounded-full bg-white/90 hover:bg-white active:scale-95 border border-slate-200/80 flex items-center justify-center gap-1 text-xs font-extrabold text-slate-800 shadow-xs transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed">
+                        <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <span>Bắt đầu</span>
+                    </button>
+                    <button id="playPauseBtn" type="button" aria-label="Tạm dừng chu trình sấy" title="Tạm dừng chạy thời gian sấy"
+                        class="w-11 h-11 rounded-full bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/80 flex items-center justify-center text-slate-700 shadow-xs transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed">
                         <svg id="iconPause" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M6 5h4v14H6zm8 0h4v14h-4z"/>
                         </svg>
-                        <svg id="iconPlay" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z"/>
-                        </svg>
                     </button>
                     <button id="resetTimerBtn" type="button" aria-label="Đặt lại thời gian sấy" title="Đặt lại thời gian sấy"
-                        class="w-11 h-11 rounded-full bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/80 flex items-center justify-center text-slate-600 shadow-xs transition cursor-pointer">
+                        class="w-11 h-11 rounded-full bg-white hover:bg-slate-50 active:scale-95 border border-slate-200/80 flex items-center justify-center text-slate-600 shadow-xs transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
@@ -895,12 +900,32 @@
                 <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3">
                     <div class="min-w-0">
                         <div class="text-xs font-bold text-slate-800">Mô phỏng dữ liệu Live</div>
-                        <div class="text-[10px] text-slate-600">Tắt để kết nối Broker MQTT với ESP32-C3</div>
+                        <div class="text-[10px] text-slate-600">Mặc định TẮT để chỉ chạy khi có kết nối ESP32-C3</div>
                     </div>
                     <label class="ios-switch">
-                        <input id="inputSimMode" type="checkbox" checked>
+                        <input id="inputSimMode" type="checkbox">
                         <span class="ios-slider-toggle sim-toggle"></span>
                     </label>
+                </div>
+
+                <!-- Cấu hình Firebase RTDB kết nối ESP32-C3 -->
+                <div class="settings-glass-item p-3.5 rounded-3xl space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="text-xs font-bold text-slate-800">Cấu hình Firebase Realtime Database</div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-700">ESP32-C3</span>
+                    </div>
+                    <div>
+                        <label for="inputFirebaseUrl" class="block text-[10px] font-bold text-slate-600 mb-1">Database URL</label>
+                        <input id="inputFirebaseUrl" type="url"
+                            class="w-full px-3 py-2 rounded-xl text-xs font-medium bg-white/80 border border-white focus:outline-none focus:ring-2 focus:ring-sky-400 text-slate-800"
+                            placeholder="https://freeze-drying-default-rtdb.firebaseio.com/">
+                    </div>
+                    <div>
+                        <label for="inputFirebasePath" class="block text-[10px] font-bold text-slate-600 mb-1">Base Path (khớp với ESP32)</label>
+                        <input id="inputFirebasePath" type="text"
+                            class="w-full px-3 py-2 rounded-xl text-xs font-medium bg-white/80 border border-white focus:outline-none focus:ring-2 focus:ring-sky-400 text-slate-800"
+                            placeholder="/may_say_yen/esp32c3">
+                    </div>
                 </div>
 
                 <!-- Nút Lưu trắng trong đậm nổi khối kiểu iPhone -->
@@ -925,29 +950,85 @@
         // 1. TRẠNG THÁI HỆ THỐNG (STATE) & HÀM TIỆN ÍCH CỐT LÕI
         // =====================================================================
         const state = {
-            isRunning: true,
-            simulationMode: true,
-            currentTemp: 29.8,
-            currentHum: 35.5,
+            isRunning: false,
+            simulationMode: false,
+            esp32Connected: false,
+            currentTemp: 0.0,
+            currentHum: 0.0,
             targetTemp: 30.0,
             targetHum: 35,
             totalHours: 24,
-            elapsedSeconds: (24 * 3600) - (23 * 3600 + 14 * 60 + 19),
+            elapsedSeconds: 0,
             showElapsed: false,
-            chillerRunning: true,
-            dh07Running: true,
+            chillerRunning: false,
+            dh07Running: false,
+            startDehumRelay: false,
+            uvRunningFromEsp: false,
             uvAutoEnabled: true,
             uvStartMin: 30,
             uvEndMin: 90,
             uvColor: '#3b82f6'
         };
 
-        let mqttClient = null;
-        const MQTT_CONFIG = {
-            brokerUrl: 'wss://broker.hivemq.com:8884/mqtt',
-            statusTopic: 'may-say-yen/esp32c3/status',
-            cmdTopic: 'may-say-yen/esp32c3/cmd'
+        let firebaseDb = null;
+        let firebaseStatusRef = null;
+        let firebaseConnRef = null;
+        let lastRemotePushMs = 0;
+        let lastRemoteStatusMs = 0;
+
+        const FIREBASE_CONFIG = {
+            databaseURL: 'https://freeze-drying-default-rtdb.firebaseio.com/',
+            basePath: '/may_say_yen/esp32c3'
         };
+
+        const FIREBASE_STORAGE_KEY = 'may_say_yen_firebase_cfg_v1';
+
+        function normalizeFirebaseUrl(rawUrl) {
+            let url = String(rawUrl || '').trim();
+            if (!url) return 'https://freeze-drying-default-rtdb.firebaseio.com/';
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            if (!url.endsWith('/')) {
+                url += '/';
+            }
+            return url;
+        }
+
+        function normalizeFirebasePath(rawPath) {
+            let path = String(rawPath || '').trim();
+            if (!path) return '/may_say_yen/esp32c3';
+            if (!path.startsWith('/')) path = '/' + path;
+            path = path.replace(/\/+$/, '');
+            return path || '/may_say_yen/esp32c3';
+        }
+
+        function loadSavedFirebaseConfig() {
+            try {
+                const raw = localStorage.getItem(FIREBASE_STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') {
+                    if (parsed.databaseURL) FIREBASE_CONFIG.databaseURL = normalizeFirebaseUrl(parsed.databaseURL);
+                    if (parsed.basePath) FIREBASE_CONFIG.basePath = normalizeFirebasePath(parsed.basePath);
+                }
+            } catch (err) {
+                console.warn('Không thể đọc cấu hình Firebase đã lưu:', err);
+            }
+        }
+
+        function saveFirebaseConfig(url, path) {
+            FIREBASE_CONFIG.databaseURL = normalizeFirebaseUrl(url);
+            FIREBASE_CONFIG.basePath = normalizeFirebasePath(path);
+            try {
+                localStorage.setItem(FIREBASE_STORAGE_KEY, JSON.stringify({
+                    databaseURL: FIREBASE_CONFIG.databaseURL,
+                    basePath: FIREBASE_CONFIG.basePath
+                }));
+            } catch (err) {
+                console.warn('Không thể lưu cấu hình Firebase:', err);
+            }
+        }
 
         function formatMinutesToHHMM(mins) {
             const clamped = Math.max(0, Math.round(mins));
@@ -975,117 +1056,260 @@
 
         function getUvScheduleState() {
             if (!state.uvAutoEnabled) {
-                return { active: false, label: 'Đang tắt UV' };
+                return { active: false, label: 'Đèn UV tắt' };
             }
-            const elapsedMins = state.elapsedSeconds / 60;
-            if (elapsedMins >= state.uvStartMin && elapsedMins < state.uvEndMin) {
-                return { active: true, label: 'Đang chiếu UV' };
-            }
-            if (elapsedMins < state.uvStartMin) {
-                return { active: false, label: 'Chờ đến giờ UV' };
-            }
-            return { active: false, label: 'Đã xong lịch UV' };
+            const elapsedMins = Math.floor((state.elapsedSeconds || 0) / 60);
+            const startM = Math.min(state.uvStartMin, state.uvEndMin);
+            const endM = Math.max(state.uvStartMin, state.uvEndMin);
+            const isInWindow = elapsedMins >= startM && elapsedMins < endM;
+            return {
+                active: isInWindow,
+                label: isInWindow ? 'Đang chiếu UV' : 'Chờ lịch UV'
+            };
         }
 
-        function renderMistPlumes(timestamp = 0) {
+        function renderMistPlumes(timestamp) {
             const layer = document.getElementById('mistParticlesLayer');
             if (!layer) return;
 
-            if (!state.isRunning) {
+            if (!state.esp32Connected || !state.isRunning) {
                 layer.innerHTML = '';
                 return;
             }
 
-            // Vòng tuần hoàn ngược kim đồng hồ qua 3 đoạn ống chính:
-            // 1. Từ Block lạnh (x=472, y=96) -> sang trái vào buồng sấy (x=326, y=96)
-            // 2. Từ dưới buồng sấy (x=326, y=322) -> sang phải vào DH07 (x=472, y=322)
-            // 3. Từ DH07 (x=604, y=252) -> đi thẳng lên Block lạnh (x=604, y=168)
-            const t = (timestamp * 0.00045) % 1;
-            const puffs = [];
+            const t = (Number(timestamp) || 0) * 0.0012;
+            const count = 8;
+            let markup = '';
 
-            for (let i = 0; i < 4; i++) {
-                const p = (t + i * 0.25) % 1;
-                const x = 466 - p * 134;
-                const y = 96 + Math.sin(p * Math.PI * 2 + i) * 2.2;
-                const op = Math.sin(p * Math.PI) * 0.72;
-                puffs.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4.5 + (i % 2) * 1.4).toFixed(1)}" fill="#e0f2fe" opacity="${op.toFixed(2)}" filter="url(#softPuffBlur)"/>`);
+            for (let i = 0; i < count; i++) {
+                const p = ((t + i / count) % 1 + 1) % 1;
+                let x = 320;
+                let y = 96;
+                let color = '#0284c7';
+
+                if (p < 0.42) {
+                    // Ống trên: đi sang trái vào buồng sấy
+                    const k = p / 0.42;
+                    x = 460 - k * 140;
+                    y = 96 + Math.sin(k * Math.PI * 2 + i) * 3;
+                    color = '#0284c7';
+                } else if (p < 0.78) {
+                    // Ống dưới: đi sang phải tới Fujihome DH07
+                    const k = (p - 0.42) / 0.36;
+                    x = 320 + k * 150;
+                    y = 322 + Math.cos(k * Math.PI * 2 + i) * 3;
+                    color = '#4f46e5';
+                } else {
+                    // Ống đứng phải: đi lên tới Block máy nước lạnh
+                    const k = (p - 0.78) / 0.22;
+                    x = 604 + Math.sin(k * Math.PI * 2 + i) * 2.5;
+                    y = 248 - k * 76;
+                    color = '#0ea5e9';
+                }
+
+                const r = 3.2 + (i % 2) * 1.1;
+                markup += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${color}" opacity="0.72"/>`;
             }
 
-            for (let i = 0; i < 4; i++) {
-                const p = (t + i * 0.25 + 0.33) % 1;
-                const x = 332 + p * 134;
-                const y = 322 + Math.cos(p * Math.PI * 2 + i) * 2.2;
-                const op = Math.sin(p * Math.PI) * 0.68;
-                puffs.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4.2 + (i % 2) * 1.5).toFixed(1)}" fill="#e0e7ff" opacity="${op.toFixed(2)}" filter="url(#softPuffBlur)"/>`);
-            }
-
-            for (let i = 0; i < 3; i++) {
-                const p = (t + i * 0.33 + 0.66) % 1;
-                const x = 604 + Math.sin(p * Math.PI * 2 + i) * 2.2;
-                const y = 246 - p * 72;
-                const op = Math.sin(p * Math.PI) * 0.72;
-                puffs.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4.4 + (i % 2) * 1.3).toFixed(1)}" fill="#bae6fd" opacity="${op.toFixed(2)}" filter="url(#softPuffBlur)"/>`);
-            }
-
-            layer.innerHTML = puffs.join('');
+            layer.innerHTML = markup;
         }
 
-        function sendEsp32Command() {
-            if (!mqttClient || !mqttClient.connected || state.simulationMode) return;
+        function isControlAllowed() {
+            return Boolean(state.esp32Connected);
+        }
+
+        function syncControlLockState() {
+            const allowed = isControlAllowed();
+            const startBtn = document.getElementById('startTimerBtn');
+            const pauseBtn = document.getElementById('playPauseBtn');
+            const resetBtn = document.getElementById('resetTimerBtn');
+            const saveBtn = document.getElementById('saveSettingsBtn');
+
+            if (startBtn) startBtn.disabled = !allowed;
+            if (pauseBtn) pauseBtn.disabled = !allowed;
+            if (resetBtn) resetBtn.disabled = !allowed;
+            if (saveBtn) saveBtn.disabled = !allowed;
+
+            const modalInputs = document.querySelectorAll('#settingsModal input, #settingsModal .preset-hour-btn');
+            modalInputs.forEach(el => {
+                // Luôn cho phép chỉnh URL/Path Firebase và công tắc Mô phỏng để người dùng cấu hình kết nối
+                if (el.id === 'inputSimMode' || el.id === 'inputFirebaseUrl' || el.id === 'inputFirebasePath') {
+                    el.disabled = false;
+                } else {
+                    el.disabled = !allowed;
+                }
+            });
+        }
+
+        function sendEsp32Command(extraFields = {}) {
+            if (!isControlAllowed()) {
+                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                return false;
+            }
+            if (!firebaseDb) {
+                initFirebaseHook();
+            }
+            if (!firebaseDb) return false;
+
             try {
-                const payload = JSON.stringify({
+                lastRemotePushMs = Date.now();
+                const cmdRef = firebaseDb.ref(`${FIREBASE_CONFIG.basePath}/cmd`);
+                cmdRef.update({
                     running: state.isRunning ? 1 : 0,
                     targetTemp: state.targetTemp,
                     targetHum: state.targetHum,
                     totalHours: state.totalHours,
                     uvAuto: state.uvAutoEnabled ? 1 : 0,
                     uvStartMin: state.uvStartMin,
-                    uvEndMin: state.uvEndMin
+                    uvEndMin: state.uvEndMin,
+                    updatedAt: Date.now(),
+                    ...extraFields
                 });
-                mqttClient.publish(MQTT_CONFIG.cmdTopic, payload);
+                return true;
             } catch (err) {
-                console.warn('Lỗi gửi lệnh MQTT:', err);
+                console.warn('Lỗi gửi lệnh Firebase tới ESP32-C3:', err);
+                return false;
             }
         }
 
-        function initMqttHook() {
-            if (typeof mqtt === 'undefined') {
-                setConnStatus('offline', 'Thiếu MQTT.js');
+        function applyRemoteStatusPayload(data) {
+            if (!data || typeof data !== 'object') return;
+            lastRemoteStatusMs = Date.now();
+            state.esp32Connected = true;
+
+            // Tránh ghi đè tức thời trong 1.5 giây sau khi người dùng vừa bấm lệnh mới
+            const recentLocalCmd = (Date.now() - lastRemotePushMs) < 1500;
+
+            if (typeof data.temp === 'number' && !Number.isNaN(data.temp)) {
+                state.currentTemp = data.temp;
+            }
+            if (typeof data.hum === 'number' && !Number.isNaN(data.hum)) {
+                state.currentHum = data.hum;
+            }
+            if (!recentLocalCmd && typeof data.elapsedSeconds === 'number' && !Number.isNaN(data.elapsedSeconds)) {
+                state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
+            }
+            if (typeof data.chiller === 'number') {
+                state.chillerRunning = data.chiller !== 0;
+            }
+            if (typeof data.dh07 === 'number') {
+                state.dh07Running = data.dh07 !== 0;
+            }
+            if (typeof data.startDehumRelay === 'number') {
+                state.startDehumRelay = data.startDehumRelay !== 0;
+            }
+            if (typeof data.uvRunning === 'number') {
+                state.uvRunningFromEsp = data.uvRunning !== 0;
+            }
+
+            if (!recentLocalCmd) {
+                if (typeof data.running === 'number') {
+                    state.isRunning = data.running !== 0;
+                }
+                if (typeof data.targetTemp === 'number' && !Number.isNaN(data.targetTemp)) {
+                    state.targetTemp = data.targetTemp;
+                }
+                if (typeof data.targetHum === 'number' && !Number.isNaN(data.targetHum)) {
+                    state.targetHum = data.targetHum;
+                }
+                if (typeof data.totalHours === 'number' && !Number.isNaN(data.totalHours)) {
+                    state.totalHours = data.totalHours;
+                }
+                if (typeof data.uvAuto === 'number') {
+                    state.uvAutoEnabled = data.uvAuto !== 0;
+                }
+                if (typeof data.uvStartMin === 'number' && !Number.isNaN(data.uvStartMin)) {
+                    state.uvStartMin = data.uvStartMin;
+                }
+                if (typeof data.uvEndMin === 'number' && !Number.isNaN(data.uvEndMin)) {
+                    state.uvEndMin = data.uvEndMin;
+                }
+            }
+
+            setConnStatus('online', 'ESP32-C3 Online');
+            renderUI();
+        }
+
+        function getUvScheduleState() {
+            if (!state.uvAutoEnabled) {
+                return { active: false, label: 'Đèn UV tắt' };
+            }
+            if (state.esp32Connected && state.isRunning && state.uvRunningFromEsp) {
+                return { active: true, label: 'Đang chiếu UV' };
+            }
+            const elapsedMins = Math.floor((state.elapsedSeconds || 0) / 60);
+            const startM = Math.min(state.uvStartMin, state.uvEndMin);
+            const endM = Math.max(state.uvStartMin, state.uvEndMin);
+            const isInWindow = elapsedMins >= startM && elapsedMins < endM;
+            return {
+                active: isInWindow,
+                label: isInWindow ? 'Đang chiếu UV' : 'Chờ lịch UV'
+            };
+        }
+
+        function stopFirebaseHook() {
+            state.esp32Connected = false;
+            if (firebaseStatusRef) {
+                try { firebaseStatusRef.off(); } catch (_) {}
+                firebaseStatusRef = null;
+            }
+            if (firebaseConnRef) {
+                try { firebaseConnRef.off(); } catch (_) {}
+                firebaseConnRef = null;
+            }
+        }
+
+        function initFirebaseHook() {
+            if (typeof firebase === 'undefined') {
+                state.esp32Connected = false;
+                setConnStatus('offline', 'Không có kết nối ESP32');
                 return;
             }
             try {
-                setConnStatus('sim', 'Đang nối MQTT...');
-                mqttClient = mqtt.connect(MQTT_CONFIG.brokerUrl, {
-                    reconnectPeriod: 4000,
-                    connectTimeout: 5000
-                });
+                const appName = 'esp32c3_dryer_app';
+                let targetApp = firebase.apps.find(a => a.name === appName);
+                if (!targetApp) {
+                    targetApp = firebase.initializeApp({
+                        databaseURL: FIREBASE_CONFIG.databaseURL
+                    }, appName);
+                }
+                firebaseDb = targetApp.database();
 
-                mqttClient.on('connect', () => {
-                    setConnStatus('online', 'ESP32-C3 Online');
-                    mqttClient.subscribe(MQTT_CONFIG.statusTopic);
-                    sendEsp32Command();
-                });
+                stopFirebaseHook();
+                setConnStatus('offline', 'Không có kết nối ESP32');
 
-                mqttClient.on('message', (_topic, message) => {
-                    try {
-                        const data = JSON.parse(message.toString());
-                        if (typeof data.temp === 'number') state.currentTemp = data.temp;
-                        if (typeof data.hum === 'number') state.currentHum = data.hum;
-                        if (typeof data.chiller === 'number') state.chillerRunning = Boolean(data.chiller);
-                        if (typeof data.dh07 === 'number') state.dh07Running = Boolean(data.dh07);
+                // Theo dõi trạng thái kết nối tới Firebase Realtime Database
+                firebaseConnRef = firebaseDb.ref('.info/connected');
+                firebaseConnRef.on('value', (snap) => {
+                    if (snap.val() !== true) {
+                        state.esp32Connected = false;
+                        setConnStatus('offline', 'Không có kết nối ESP32');
                         renderUI();
-                    } catch (_) {}
+                    }
                 });
 
-                mqttClient.on('offline', () => {
-                    if (!state.simulationMode) setConnStatus('offline', 'Mất kết nối');
+                // Lắng nghe dữ liệu trạng thái thực tế từ ESP32-C3
+                firebaseStatusRef = firebaseDb.ref(`${FIREBASE_CONFIG.basePath}/status`);
+                firebaseStatusRef.on('value', (snapshot) => {
+                    const val = snapshot.val();
+                    if (val && typeof val === 'object') {
+                        applyRemoteStatusPayload(val);
+                    } else {
+                        state.esp32Connected = false;
+                        setConnStatus('offline', 'Không có kết nối ESP32');
+                        renderUI();
+                    }
+                }, (err) => {
+                    console.warn('Lỗi đọc Firebase status:', err);
+                    state.esp32Connected = false;
+                    setConnStatus('offline', 'Không có kết nối ESP32');
+                    renderUI();
                 });
-
-                mqttClient.on('error', () => {
-                    if (!state.simulationMode) setConnStatus('offline', 'Lỗi Broker');
-                });
-            } catch (_) {
-                setConnStatus('offline', 'Lỗi khởi tạo MQTT');
+            } catch (err) {
+                console.warn('Lỗi khởi tạo Firebase:', err);
+                state.esp32Connected = false;
+                setConnStatus('offline', 'Không có kết nối ESP32');
+                renderUI();
             }
         }
 
@@ -1241,27 +1465,39 @@
         // =====================================================================
         function renderSimulation() {
             const uvState = getUvScheduleState();
-            const uvIsGlowing = state.isRunning && uvState.active;
+            const canAct = state.esp32Connected && state.isRunning;
+            const uvIsGlowing = canAct && uvState.active;
             syncUvVisualState(uvIsGlowing);
-            document.getElementById('modalUvLiveReadout').textContent = uvState.label;
+            const readoutEl = document.getElementById('modalUvLiveReadout');
+            if (readoutEl) {
+                readoutEl.textContent = state.esp32Connected ? uvState.label : 'Không có kết nối ESP32';
+            }
         }
 
         function renderUI() {
+            syncControlLockState();
+
+            const connected = state.esp32Connected;
             const dispTempEl = document.getElementById('dispTemp');
             const dispHumEl = document.getElementById('dispHum');
             const lblTargetTempEl = document.getElementById('lblTargetTemp');
             const lblTargetHumEl = document.getElementById('lblTargetHum');
             const dispDewEl = document.getElementById('dispDew');
 
-            if (dispTempEl) dispTempEl.textContent = state.currentTemp.toFixed(1);
-            if (dispHumEl) dispHumEl.textContent = state.currentHum.toFixed(1);
+            if (dispTempEl) dispTempEl.textContent = connected ? state.currentTemp.toFixed(1) : '--.-';
+            if (dispHumEl) dispHumEl.textContent = connected ? state.currentHum.toFixed(1) : '--.-';
             if (lblTargetTempEl) lblTargetTempEl.textContent = state.targetTemp.toFixed(1) + '°C';
             if (lblTargetHumEl) lblTargetHumEl.textContent = state.targetHum + '%';
-            if (dispDewEl) dispDewEl.textContent = calcDewPoint(state.currentTemp, state.currentHum) + '°C';
+            if (dispDewEl) dispDewEl.textContent = connected ? (calcDewPoint(state.currentTemp, state.currentHum) + '°C') : '--.-°C';
+
+            const activeRun = connected && state.isRunning;
 
             const tempBadge = document.getElementById('badgeTempState');
             if (tempBadge) {
-                if (!state.isRunning) {
+                if (!connected) {
+                    tempBadge.textContent = 'Mất kết nối ESP32';
+                    tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700';
+                } else if (!state.isRunning) {
                     tempBadge.textContent = 'Tạm dừng';
                     tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
                 } else if (state.currentTemp > state.targetTemp + 0.4) {
@@ -1275,7 +1511,10 @@
 
             const humBadge = document.getElementById('badgeHumState');
             if (humBadge) {
-                if (!state.isRunning) {
+                if (!connected) {
+                    humBadge.textContent = 'Mất kết nối ESP32';
+                    humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700';
+                } else if (!state.isRunning) {
                     humBadge.textContent = 'Nghỉ';
                     humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
                 } else if (state.currentHum > state.targetHum + 0.8) {
@@ -1302,10 +1541,14 @@
                 );
             }
 
-            const iconPauseEl = document.getElementById('iconPause');
-            const iconPlayEl = document.getElementById('iconPlay');
-            if (iconPauseEl) iconPauseEl.classList.toggle('hidden', !state.isRunning);
-            if (iconPlayEl) iconPlayEl.classList.toggle('hidden', state.isRunning);
+            const startBtn = document.getElementById('startTimerBtn');
+            if (startBtn) {
+                if (activeRun) {
+                    startBtn.className = 'px-3 h-11 rounded-full bg-emerald-500 text-white border border-emerald-400 flex items-center justify-center gap-1 text-xs font-extrabold shadow-xs transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed';
+                } else {
+                    startBtn.className = 'px-3 h-11 rounded-full bg-white/90 hover:bg-white active:scale-95 border border-slate-200/80 flex items-center justify-center gap-1 text-xs font-extrabold text-slate-800 shadow-xs transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed';
+                }
+            }
 
             renderSimulation();
 
@@ -1313,26 +1556,31 @@
             const sysBadgeText = document.getElementById('sysBadgeText');
             const chamberMist = document.getElementById('chamberMistAmbient');
 
-            if (state.isRunning) {
+            if (!connected) {
+                if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
+                if (sysBadgeText) sysBadgeText.textContent = 'KHÔNG CÓ KẾT NỐI ESP32 • HỆ THỐNG ĐÃ DỪNG';
+                if (chamberMist) chamberMist.style.opacity = '0';
+            } else if (activeRun) {
                 if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0';
                 if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG ĐANG SẤY • TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ';
                 if (chamberMist) chamberMist.style.opacity = '0.58';
             } else {
                 if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
-                if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG TẠM DỪNG • TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ';
+                if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG TẠM DỪNG • CHỜ NHẤN BẮT ĐẦU';
                 if (chamberMist) chamberMist.style.opacity = '0.12';
             }
 
-            const chillerActive = state.isRunning && state.chillerRunning;
+            const chillerActive = activeRun && state.chillerRunning;
             const chillerLedEl = document.getElementById('svgChillerLed');
             const chillerStatusEl = document.getElementById('svgChillerStatus');
             if (chillerLedEl) chillerLedEl.setAttribute('fill', chillerActive ? '#0ea5e9' : '#94a3b8');
             if (chillerStatusEl) {
-                chillerStatusEl.textContent = chillerActive ? 'Đang làm mát' : (state.isRunning ? 'Đủ nhiệt' : 'Tạm dừng');
+                chillerStatusEl.textContent = !connected ? 'Mất kết nối' : (chillerActive ? 'Đang làm mát' : (state.isRunning ? 'Đủ nhiệt' : 'Tạm dừng'));
                 chillerStatusEl.setAttribute('fill', chillerActive ? '#0369a1' : '#64748b');
             }
 
-            const dh07Active = state.isRunning && state.dh07Running;
+            // Chỉ khi đã kết nối ESP32 và đã bấm "Bắt đầu" (activeRun) thì quạt hút ẩm mới quay và báo "Đang tách ẩm"
+            const dh07Active = activeRun;
             const dh07Fan = document.getElementById('svgDh07Fan');
             if (dh07Fan) {
                 if (dh07Active) dh07Fan.classList.add('fan-spinning');
@@ -1343,7 +1591,9 @@
             const dh07StatusEl = document.getElementById('svgDh07Status');
             if (dh07LedEl) dh07LedEl.setAttribute('fill', dh07Active ? '#22c55e' : '#94a3b8');
             if (dh07StatusEl) {
-                dh07StatusEl.textContent = dh07Active ? 'Đang tách ẩm' : (state.isRunning ? 'Đạt độ ẩm' : 'Tạm dừng');
+                dh07StatusEl.textContent = !connected
+                    ? 'Mất kết nối'
+                    : (dh07Active ? 'Đang tách ẩm' : 'Tạm dừng');
                 dh07StatusEl.setAttribute('fill', dh07Active ? '#15803d' : '#64748b');
             }
         }
@@ -1377,18 +1627,40 @@
             renderUI();
         });
 
+        document.getElementById('startTimerBtn').addEventListener('click', () => {
+            if (!isControlAllowed()) {
+                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                return;
+            }
+            state.isRunning = true;
+            if (sendEsp32Command({ running: 1 })) {
+                renderUI();
+                showToast('Đã gửi lệnh Bắt đầu sấy tới ESP32-C3');
+            }
+        });
+
         document.getElementById('playPauseBtn').addEventListener('click', () => {
-            state.isRunning = !state.isRunning;
-            sendEsp32Command();
-            renderUI();
-            showToast(state.isRunning ? 'Đã tiếp tục chu trình sấy' : 'Đã tạm dừng hệ thống sấy');
+            if (!isControlAllowed()) {
+                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                return;
+            }
+            state.isRunning = false;
+            if (sendEsp32Command({ running: 0 })) {
+                renderUI();
+                showToast('Đã tạm dừng chu trình sấy trên ESP32-C3');
+            }
         });
 
         document.getElementById('resetTimerBtn').addEventListener('click', () => {
+            if (!isControlAllowed()) {
+                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                return;
+            }
             state.elapsedSeconds = 0;
-            sendEsp32Command();
-            renderUI();
-            showToast('Đã đặt lại thời gian sấy về 00:00:00');
+            if (sendEsp32Command({ resetElapsed: 1 })) {
+                renderUI();
+                showToast('Đã đặt lại thời gian sấy về 00:00:00');
+            }
         });
 
         const settingsModal = document.getElementById('settingsModal');
@@ -1481,6 +1753,8 @@
             updateUvBoxState();
 
             document.getElementById('inputSimMode').checked = state.simulationMode;
+            document.getElementById('inputFirebaseUrl').value = FIREBASE_CONFIG.databaseURL;
+            document.getElementById('inputFirebasePath').value = FIREBASE_CONFIG.basePath;
             settingsModal.classList.add('open');
         });
 
@@ -1527,9 +1801,31 @@
         });
 
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-            const prevSim = state.simulationMode;
-            const newHours = parseInt(inputTotalHours.value, 10);
+            const prevUrl = FIREBASE_CONFIG.databaseURL;
+            const prevPath = FIREBASE_CONFIG.basePath;
+            saveFirebaseConfig(
+                document.getElementById('inputFirebaseUrl').value,
+                document.getElementById('inputFirebasePath').value
+            );
+            const configChanged = (prevUrl !== FIREBASE_CONFIG.databaseURL) || (prevPath !== FIREBASE_CONFIG.basePath);
 
+            state.simulationMode = false;
+            const simInput = document.getElementById('inputSimMode');
+            if (simInput) simInput.checked = false;
+
+            if (!firebaseStatusRef || configChanged) {
+                firebaseDb = null;
+                initFirebaseHook();
+            }
+
+            if (!isControlAllowed()) {
+                renderUI();
+                closeSettingsModal();
+                showToast('Không có kết nối ESP32 — đã cập nhật cấu hình kết nối');
+                return;
+            }
+
+            const newHours = parseInt(inputTotalHours.value, 10);
             state.isRunning = inputSystemRunning.checked;
             state.targetTemp = parseFloat(inputTargetTemp.value);
             state.targetHum = parseInt(inputTargetHum.value, 10);
@@ -1541,28 +1837,31 @@
             state.uvAutoEnabled = inputUvAuto.checked;
             state.uvStartMin = parseInt(inputUvStart.value, 10);
             state.uvEndMin = parseInt(inputUvEnd.value, 10);
-            state.simulationMode = document.getElementById('inputSimMode').checked;
-
-            if (state.simulationMode) {
-                if (mqttClient) {
-                    try { mqttClient.end(true); } catch (_) {}
-                    mqttClient = null;
-                }
-                setConnStatus('sim', 'Mô phỏng Live');
-            } else if (prevSim !== state.simulationMode || !mqttClient) {
-                initMqttHook();
-            }
 
             sendEsp32Command();
             renderUI();
             closeSettingsModal();
-            showToast('Đã lưu cài đặt sấy & lịch đèn UV');
+            showToast('Đã lưu cài đặt sấy & đồng bộ ESP32-C3');
         });
 
         // =====================================================================
         // 8. VÒNG LẶP ĐỒNG HỒ MỖI GIÂY & HOẠT CẢNH SƯƠNG MÙ
         // =====================================================================
         setInterval(() => {
+            if (!state.esp32Connected) {
+                setConnStatus('offline', 'Không có kết nối ESP32');
+                renderUI();
+                return;
+            }
+
+            // Nếu quá 12 giây không nhận được heartbeat status từ ESP32-C3 -> coi như mất kết nối
+            if (lastRemoteStatusMs > 0 && (Date.now() - lastRemoteStatusMs) > 12000) {
+                state.esp32Connected = false;
+                setConnStatus('offline', 'Không có kết nối ESP32');
+                renderUI();
+                return;
+            }
+
             if (!state.isRunning) return;
 
             const totalSec = state.totalHours * 3600;
@@ -1570,28 +1869,29 @@
                 state.elapsedSeconds += 1;
             }
 
-            if (state.simulationMode) {
-                const dTemp = state.targetTemp - state.currentTemp;
-                state.currentTemp += dTemp * 0.04 + (Math.random() - 0.5) * 0.08;
-                state.chillerRunning = state.currentTemp > state.targetTemp - 0.35;
-
-                const dHum = state.targetHum - state.currentHum;
-                state.currentHum += dHum * 0.03 + (Math.random() - 0.5) * 0.14;
-                state.dh07Running = state.currentHum > state.targetHum - 0.5;
-            }
-
             renderUI();
         }, 1000);
 
         function animateMistLoop(timestamp) {
-            renderMistPlumes(timestamp);
+            if (state.esp32Connected && state.isRunning) {
+                renderMistPlumes(timestamp);
+            } else {
+                renderMistPlumes(0);
+            }
             requestAnimationFrame(animateMistLoop);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            setUvLightColor('#3b82f6');
-            renderUI();
-            requestAnimationFrame(animateMistLoop);
+            try {
+                loadSavedFirebaseConfig();
+                setUvLightColor('#3b82f6');
+                initFirebaseHook();
+                renderUI();
+                requestAnimationFrame(animateMistLoop);
+            } catch (err) {
+                console.error('Lỗi khởi tạo giao diện:', err);
+                setConnStatus('offline', 'Không có kết nối ESP32');
+            }
         });
     </script>
 </body>
