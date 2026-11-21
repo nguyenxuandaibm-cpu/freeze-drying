@@ -893,8 +893,8 @@
             simulationMode: false,
             esp32Connected: false,
             hasSensorData: false,
-            currentTemp: 29.8,
-            currentHum: 35.5,
+            currentTemp: null,
+            currentHum: null,
             targetTemp: 30.0,
             targetHum: 35,
             totalHours: 24,
@@ -1121,7 +1121,13 @@
         function markEsp32Active() {
             lastRemoteActivityMs = Date.now();
             state.esp32Connected = true;
-            setConnStatus('online', 'ESP32-C3 Online');
+            if (!state.simulationMode) {
+                setConnStatus('online', 'ESP32-C3 Online');
+            }
+        }
+
+        function isValidSensorNumber(val) {
+            return typeof val === 'number' && !Number.isNaN(val) && Number.isFinite(val) && val > -50 && val < 150;
         }
 
         function applyStatusObject(data) {
@@ -1130,17 +1136,23 @@
 
             const recentLocalCmd = (Date.now() - lastRemotePushMs) < 1500;
 
-            const tempVal = typeof data.temp === 'number' ? data.temp : (typeof data.nhiet_do === 'number' ? data.nhiet_do : null);
-            const humVal  = typeof data.hum === 'number' ? data.hum : (typeof data.do_am === 'number' ? data.do_am : null);
+            if (typeof data.sensorValid === 'number' && data.sensorValid === 0) {
+                state.hasSensorData = false;
+                state.currentTemp = null;
+                state.currentHum = null;
+            } else {
+                const tempVal = isValidSensorNumber(data.temp) ? data.temp : (isValidSensorNumber(data.nhiet_do) ? data.nhiet_do : null);
+                const humVal  = isValidSensorNumber(data.hum) ? data.hum : (isValidSensorNumber(data.do_am) ? data.do_am : null);
 
-            if (tempVal !== null && !Number.isNaN(tempVal)) {
-                state.currentTemp = tempVal;
-                state.hasSensorData = true;
+                if (tempVal !== null && humVal !== null) {
+                    state.currentTemp = tempVal;
+                    state.currentHum = humVal;
+                    state.hasSensorData = true;
+                } else if (data.sensorValid === 0 || (data.temp === null && data.nhiet_do === null)) {
+                    state.hasSensorData = false;
+                }
             }
-            if (humVal !== null && !Number.isNaN(humVal)) {
-                state.currentHum = humVal;
-                state.hasSensorData = true;
-            }
+
             if (!recentLocalCmd && typeof data.elapsedSeconds === 'number' && !Number.isNaN(data.elapsedSeconds)) {
                 state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
             }
@@ -1194,12 +1206,65 @@
                 const base = FIREBASE_CONFIG.basePath;
 
                 // 1. Lắng nghe cấu trúc cũ (/may_say/nhiet_do, /may_say/do_am) và cấu trúc mới
+                attachListener(firebaseDb.ref(`${base}/sensorValid`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (v !== null && v !== undefined) {
+                        markEsp32Active();
+                        if (Number(v) === 0) {
+                            state.hasSensorData = false;
+                            renderUI();
+                        }
+                    }
+                });
+
                 attachListener(firebaseDb.ref(`${base}/nhiet_do`), 'value', (snap) => {
                     const v = snap.val();
-                    if (typeof v === 'number' && !Number.isNaN(v)) {
+                    if (isValidSensorNumber(v)) {
                         state.currentTemp = v;
-                        state.hasSensorData = true;
+                        if (isValidSensorNumber(state.currentHum)) state.hasSensorData = true;
                         markEsp32Active();
+                        renderUI();
+                    } else if (v === null) {
+                        state.hasSensorData = false;
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/do_am`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (isValidSensorNumber(v)) {
+                        state.currentHum = v;
+                        if (isValidSensorNumber(state.currentTemp)) state.hasSensorData = true;
+                        markEsp32Active();
+                        renderUI();
+                    } else if (v === null) {
+                        state.hasSensorData = false;
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/temp`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (isValidSensorNumber(v)) {
+                        state.currentTemp = v;
+                        if (isValidSensorNumber(state.currentHum)) state.hasSensorData = true;
+                        markEsp32Active();
+                        renderUI();
+                    } else if (v === null) {
+                        state.hasSensorData = false;
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/hum`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (isValidSensorNumber(v)) {
+                        state.currentHum = v;
+                        if (isValidSensorNumber(state.currentTemp)) state.hasSensorData = true;
+                        markEsp32Active();
+                        renderUI();
+                    } else if (v === null) {
+                        state.hasSensorData = false;
                         renderUI();
                     }
                 });
@@ -1406,7 +1471,7 @@
             syncControlLockState();
 
             const hasLiveOrSim = state.esp32Connected || state.simulationMode;
-            const showValues = state.hasSensorData || state.simulationMode;
+            const showValues = (state.esp32Connected && state.hasSensorData && isValidSensorNumber(state.currentTemp) && isValidSensorNumber(state.currentHum)) || state.simulationMode;
 
             const dispTempEl = document.getElementById('dispTemp');
             const dispHumEl = document.getElementById('dispHum');
@@ -1427,6 +1492,9 @@
                 if (!hasLiveOrSim) {
                     tempBadge.textContent = 'Chờ kết nối';
                     tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
+                } else if (!showValues) {
+                    tempBadge.textContent = 'Chưa gắn cảm biến';
+                    tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700';
                 } else if (!state.isRunning) {
                     tempBadge.textContent = 'Tạm dừng';
                     tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
@@ -1444,6 +1512,9 @@
                 if (!hasLiveOrSim) {
                     humBadge.textContent = 'Chờ kết nối';
                     humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
+                } else if (!showValues) {
+                    humBadge.textContent = 'Chưa gắn cảm biến';
+                    humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700';
                 } else if (!state.isRunning) {
                     humBadge.textContent = 'Nghỉ';
                     humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
@@ -1776,8 +1847,10 @@
         // 5. VÒNG LẶP ĐỒNG HỒ MỖI GIÂY & HOẠT CẢNH SƯƠNG MÙ
         // =====================================================================
         setInterval(() => {
-            if (state.esp32Connected && lastRemoteActivityMs > 0 && (Date.now() - lastRemoteActivityMs) > 15000) {
+            // Nếu ESP32 không đẩy cập nhật mới sau 6 giây (ví dụ bị rút nguồn) thì chuyển sang Không có kết nối ESP32
+            if (state.esp32Connected && lastRemoteActivityMs > 0 && (Date.now() - lastRemoteActivityMs) > 6000) {
                 state.esp32Connected = false;
+                state.hasSensorData = false;
                 if (!state.simulationMode) {
                     setConnStatus('offline', 'Không có kết nối ESP32');
                 }
