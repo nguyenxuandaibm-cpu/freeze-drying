@@ -551,7 +551,7 @@
                 </div>
                 <div class="glass-pill px-3 py-1 rounded-full text-slate-700 flex items-center gap-1.5">
                     <span id="connDot" class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
-                    <span id="connText">Đang chờ ESP32</span>
+                    <span id="connText">Đang chờ Máy</span>
                 </div>
             </div>
 
@@ -699,7 +699,7 @@
 
         <!-- Ghi chú chân trang -->
         <footer class="text-center text-[11px] font-semibold text-slate-500 pb-2">
-            Máy Sấy Lạnh Tổ Yến • Tuần hoàn ngược kim đồng hồ • Đồng bộ Firebase ESP32-C3
+           • Máy Sấy Lạnh Tổ Yến •
         </footer>
     </div>
 
@@ -726,8 +726,8 @@
             </div>
 
             <div class="space-y-3.5 sm:space-y-4">
-                <!-- Bật/tắt hệ thống sấy -->
-                <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3">
+                <!-- Bật/tắt hệ thống sấy (ĐÃ ẨN - dùng nút Bắt đầu / Tạm dừng ngoài màn hình chính) -->
+                <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3" style="display:none" aria-hidden="true">
                     <div class="min-w-0">
                         <div class="text-sm font-bold text-slate-800">Trạng thái hệ thống sấy</div>
                         <div class="text-[11px] text-slate-600">Bật hoặc tạm dừng toàn bộ chu trình sấy</div>
@@ -835,11 +835,11 @@
                     </div>
                 </div>
 
-                <!-- 5. Mô phỏng dữ liệu Live -->
-                <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3">
+                <!-- 5. Mô phỏng dữ liệu Live (ĐÃ ẨN) -->
+                <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3" style="display:none" aria-hidden="true">
                     <div class="min-w-0">
                         <div class="text-xs font-bold text-slate-800">Mô phỏng dữ liệu Live</div>
-                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có ESP32 gửi dữ liệu</div>
+                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có gửi dữ liệu</div>
                     </div>
                     <label class="ios-switch">
                         <input id="inputSimMode" type="checkbox">
@@ -847,8 +847,8 @@
                     </label>
                 </div>
 
-                <!-- Cấu hình Firebase RTDB kết nối ESP32-C3 -->
-                <div class="settings-glass-item p-3.5 rounded-3xl space-y-2.5">
+                <!-- Cấu hình Firebase RTDB kết nối ESP32-C3 (ĐÃ ẨN - dùng giá trị mặc định /may_say) -->
+                <div class="settings-glass-item p-3.5 rounded-3xl space-y-2.5" style="display:none" aria-hidden="true">
                     <div class="flex items-center justify-between gap-2">
                         <div class="text-xs font-bold text-slate-800">Cấu hình Firebase Realtime Database</div>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-700">ESP32-C3</span>
@@ -1132,7 +1132,7 @@
             state.startDehumRelay = false;
             state.uvRunningFromEsp = false;
             if (!state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
         }
 
@@ -1398,7 +1398,7 @@
             syncUvVisualState(canAct && uvState.active);
             const readoutEl = document.getElementById('modalUvLiveReadout');
             if (readoutEl) {
-                readoutEl.textContent = isControlAllowed() ? uvState.label : 'Chờ dữ liệu ESP32';
+                readoutEl.textContent = isControlAllowed() ? uvState.label : 'Loading...';
             }
         }
 
@@ -1741,7 +1741,7 @@
             );
             const configChanged = (prevUrl !== FIREBASE_CONFIG.databaseURL) || (prevPath !== FIREBASE_CONFIG.basePath);
 
-            state.simulationMode = Boolean(document.getElementById('inputSimMode').checked);
+            state.simulationMode = false;   // đã ẩn tùy chọn mô phỏng: luôn dùng dữ liệu thật
 
             if (!listeners.length || configChanged) {
                 firebaseDb = null;
@@ -1749,7 +1749,7 @@
             }
 
             const newHours = parseInt(inputTotalHours.value, 10);
-            state.isRunning = inputSystemRunning.checked;
+            // Không đổi trạng thái chạy/dừng ở đây: chỉ nút Bắt đầu / Tạm dừng mới điều khiển chu trình
             state.targetTemp = parseFloat(inputTargetTemp.value);
             state.targetHum = parseInt(inputTargetHum.value, 10);
             state.totalHours = newHours;
@@ -1768,17 +1768,17 @@
                 setTimeout(() => {
                     if (pendingProfileId === pid) {
                         pendingProfileId = null;
-                        showToast('Chưa nhận xác nhận từ ESP32 — kiểm tra kết nối');
+                        showToast('Chưa nhận xác nhận từ máy — kiểm tra kết nối');
                     }
                 }, 8000);
             } else {
-                showToast('ESP32 chưa online — cài đặt chưa được gửi');
+                showToast('chưa online — cài đặt chưa được gửi');
             }
 
             if (state.simulationMode) {
                 setConnStatus('sim', 'Mô phỏng Live');
             } else if (!state.esp32Connected) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
 
             renderUI();
@@ -1794,7 +1794,7 @@
             if (state.esp32Connected && (Date.now() - lastRemoteActivityMs) > ESP_TIMEOUT_MS) {
                 setEsp32Offline();
             } else if (!state.esp32Connected && !state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
 
             if ((state.esp32Connected || state.simulationMode) && state.isRunning) {
@@ -1825,7 +1825,7 @@
                 requestAnimationFrame(animateMistLoop);
             } catch (err) {
                 console.error('Lỗi khởi tạo giao diện:', err);
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
         });
     </script>
