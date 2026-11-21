@@ -914,6 +914,9 @@
         let listeners = [];
         let lastRemotePushMs = 0;
         let lastRemoteActivityMs = 0;
+        let lastHeartbeat = null;      // giá trị heartbeat gần nhất ESP32 gửi lên
+        let heartbeatSeen = false;     // đã nhận snapshot đầu tiên chưa
+        const ESP_TIMEOUT_MS = 7000;   // quá 7s không đổi heartbeat => ESP32 offline
 
         const FIREBASE_CONFIG = {
             databaseURL: 'https://freeze-drying-default-rtdb.firebaseio.com/',
@@ -1082,6 +1085,8 @@
         }
 
         function sendEsp32Command(extraFields = {}) {
+            // Chỉ gửi lệnh khi ESP32 THẬT đang online (heartbeat còn mới)
+            if (!state.esp32Connected) return false;
             if (!firebaseDb) {
                 initFirebaseHook();
             }
@@ -1091,7 +1096,7 @@
                 lastRemotePushMs = Date.now();
                 const base = FIREBASE_CONFIG.basePath;
 
-                // Ghi đồng bộ vào cả /cmd và nhánh trực tiếp để tương thích mọi bản firmware
+                // Web CHỈ ghi vào /cmd. Trạng thái thật (running, relay, nhiệt độ...) do ESP32 báo lại ở /status.
                 const payload = {
                     running: state.isRunning ? 1 : 0,
                     targetTemp: state.targetTemp,
@@ -1100,21 +1105,33 @@
                     uvAuto: state.uvAutoEnabled ? 1 : 0,
                     uvStartMin: state.uvStartMin,
                     uvEndMin: state.uvEndMin,
-                    startDehumRelay: state.isRunning ? 1 : 0,
                     updatedAt: Date.now(),
                     ...extraFields
                 };
+                delete payload.startDehumRelay; // rơ-le này do ESP32 tự quyết định theo 'running'
 
-                firebaseDb.ref(`${base}/cmd`).update(payload);
-                firebaseDb.ref(`${base}/running`).set(state.isRunning ? 1 : 0);
-                firebaseDb.ref(`${base}/startDehumRelay`).set(state.isRunning ? 1 : 0);
-                if (Object.prototype.hasOwnProperty.call(extraFields, 'resetElapsed')) {
-                    firebaseDb.ref(`${base}/elapsedSeconds`).set(0);
-                }
+                firebaseDb.ref(`${base}/cmd`).update(payload).catch((err) => {
+                    console.warn('Firebase từ chối lệnh:', err);
+                    showToast('Gửi lệnh thất bại — kiểm tra Firebase Rules');
+                });
                 return true;
             } catch (err) {
                 console.warn('Lỗi gửi lệnh Firebase tới ESP32-C3:', err);
                 return false;
+            }
+        }
+
+        function setEsp32Offline() {
+            state.esp32Connected = false;
+            state.hasSensorData = false;
+            state.currentTemp = null;
+            state.currentHum = null;
+            state.chillerRunning = false;
+            state.dh07Running = false;
+            state.startDehumRelay = false;
+            state.uvRunningFromEsp = false;
+            if (!state.simulationMode) {
+                setConnStatus('offline', 'Không có kết nối ESP32');
             }
         }
 
@@ -1132,44 +1149,53 @@
 
         function applyStatusObject(data) {
             if (!data || typeof data !== 'object') return;
+
+            // --- Xác định ESP32 có THẬT SỰ đang sống hay không ---
+            // Chỉ khi trường 'hb' (heartbeat, ESP32 tăng mỗi lần đẩy) THAY ĐỔI so với lần trước
+            // thì mới coi là online. Dữ liệu cũ còn lưu trong Firebase sẽ không làm hiện "Online".
+            const hb = (data.hb !== undefined && data.hb !== null) ? data.hb : data.updatedAtMs;
+            if (!heartbeatSeen) {
+                heartbeatSeen = true;
+                lastHeartbeat = hb;
+                return; // snapshot đầu tiên có thể là dữ liệu cũ => bỏ qua
+            }
+            if (hb === undefined || hb === null || hb === lastHeartbeat) return;
+            lastHeartbeat = hb;
             markEsp32Active();
 
-            const recentLocalCmd = (Date.now() - lastRemotePushMs) < 1500;
+            const recentLocalCmd = (Date.now() - lastRemotePushMs) < 2500;
 
-            if (typeof data.sensorValid === 'number' && data.sensorValid === 0) {
+            // --- Cảm biến: chỉ hiện khi ESP32 báo sensorValid = 1 và có số thật ---
+            if (Number(data.sensorValid) !== 1) {
                 state.hasSensorData = false;
                 state.currentTemp = null;
                 state.currentHum = null;
+            } else if (isValidSensorNumber(data.temp) && isValidSensorNumber(data.hum)) {
+                state.currentTemp = data.temp;
+                state.currentHum = data.hum;
+                state.hasSensorData = true;
             } else {
-                const tempVal = isValidSensorNumber(data.temp) ? data.temp : (isValidSensorNumber(data.nhiet_do) ? data.nhiet_do : null);
-                const humVal  = isValidSensorNumber(data.hum) ? data.hum : (isValidSensorNumber(data.do_am) ? data.do_am : null);
-
-                if (tempVal !== null && humVal !== null) {
-                    state.currentTemp = tempVal;
-                    state.currentHum = humVal;
-                    state.hasSensorData = true;
-                } else if (data.sensorValid === 0 || (data.temp === null && data.nhiet_do === null)) {
-                    state.hasSensorData = false;
-                }
+                state.hasSensorData = false;
+                state.currentTemp = null;
+                state.currentHum = null;
             }
 
-            if (!recentLocalCmd && typeof data.elapsedSeconds === 'number' && !Number.isNaN(data.elapsedSeconds)) {
-                state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
-            }
-            if (typeof data.chiller === 'number') {
-                state.chillerRunning = data.chiller !== 0;
-            }
-            if (typeof data.dh07 === 'number') {
-                state.dh07Running = data.dh07 !== 0;
-            }
-            if (typeof data.startDehumRelay === 'number') {
-                state.startDehumRelay = data.startDehumRelay !== 0;
-            }
-            if (typeof data.uvRunning === 'number') {
-                state.uvRunningFromEsp = data.uvRunning !== 0;
-            }
-            if (!recentLocalCmd && typeof data.running === 'number') {
-                state.isRunning = data.running !== 0;
+            // --- Trạng thái thiết bị: lấy nguyên từ ESP32 ---
+            state.chillerRunning   = Number(data.chiller) === 1;
+            state.dh07Running      = Number(data.dh07) === 1;
+            state.startDehumRelay  = Number(data.startDehumRelay) === 1;
+            state.uvRunningFromEsp = Number(data.uvRunning) === 1;
+
+            if (!recentLocalCmd) {
+                if (typeof data.elapsedSeconds === 'number') state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
+                if (data.running !== undefined) state.isRunning = Number(data.running) === 1;
+                // Đồng bộ cả thông số cài đặt để mọi thiết bị mở web đều thấy giống ESP32
+                if (typeof data.targetTemp === 'number') state.targetTemp = data.targetTemp;
+                if (typeof data.targetHum === 'number') state.targetHum = data.targetHum;
+                if (typeof data.totalHours === 'number') state.totalHours = data.totalHours;
+                if (data.uvAuto !== undefined) state.uvAutoEnabled = Number(data.uvAuto) === 1;
+                if (typeof data.uvStartMin === 'number') state.uvStartMin = data.uvStartMin;
+                if (typeof data.uvEndMin === 'number') state.uvEndMin = data.uvEndMin;
             }
 
             renderUI();
@@ -1183,7 +1209,11 @@
         }
 
         function attachListener(ref, event, cb) {
-            ref.on(event, cb);
+            ref.on(event, cb, (err) => {
+                console.warn('Firebase listener lỗi:', err);
+                setEsp32Offline();
+                renderUI();
+            });
             listeners.push({ ref, event, cb });
         }
 
@@ -1203,125 +1233,17 @@
                 firebaseDb = targetApp.database();
                 stopFirebaseHook();
 
+                // Reset trạng thái kết nối mỗi lần (re)subscribe
+                heartbeatSeen = false;
+                lastHeartbeat = null;
+                setEsp32Offline();
+
                 const base = FIREBASE_CONFIG.basePath;
 
-                // 1. Lắng nghe cấu trúc cũ (/may_say/nhiet_do, /may_say/do_am) và cấu trúc mới
-                attachListener(firebaseDb.ref(`${base}/sensorValid`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (v !== null && v !== undefined) {
-                        markEsp32Active();
-                        if (Number(v) === 0) {
-                            state.hasSensorData = false;
-                            renderUI();
-                        }
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/nhiet_do`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (isValidSensorNumber(v)) {
-                        state.currentTemp = v;
-                        if (isValidSensorNumber(state.currentHum)) state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    } else if (v === null) {
-                        state.hasSensorData = false;
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/do_am`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (isValidSensorNumber(v)) {
-                        state.currentHum = v;
-                        if (isValidSensorNumber(state.currentTemp)) state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    } else if (v === null) {
-                        state.hasSensorData = false;
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/temp`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (isValidSensorNumber(v)) {
-                        state.currentTemp = v;
-                        if (isValidSensorNumber(state.currentHum)) state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    } else if (v === null) {
-                        state.hasSensorData = false;
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/hum`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (isValidSensorNumber(v)) {
-                        state.currentHum = v;
-                        if (isValidSensorNumber(state.currentTemp)) state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    } else if (v === null) {
-                        state.hasSensorData = false;
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/do_am`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (typeof v === 'number' && !Number.isNaN(v)) {
-                        state.currentHum = v;
-                        state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/temp`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (typeof v === 'number' && !Number.isNaN(v)) {
-                        state.currentTemp = v;
-                        state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/hum`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (typeof v === 'number' && !Number.isNaN(v)) {
-                        state.currentHum = v;
-                        state.hasSensorData = true;
-                        markEsp32Active();
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/running`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (v !== null && v !== undefined && (Date.now() - lastRemotePushMs) >= 1500) {
-                        state.isRunning = Number(v) !== 0;
-                        markEsp32Active();
-                        renderUI();
-                    }
-                });
-
-                attachListener(firebaseDb.ref(`${base}/startDehumRelay`), 'value', (snap) => {
-                    const v = snap.val();
-                    if (v !== null && v !== undefined) {
-                        state.startDehumRelay = Number(v) !== 0;
-                        markEsp32Active();
-                        renderUI();
-                    }
-                });
-
+                // DUY NHẤT một nguồn dữ liệu: /status do ESP32 ghi. Không đọc nhánh nào khác
+                // (tránh hiện số liệu cũ / số liệu do chính web ghi vào).
                 attachListener(firebaseDb.ref(`${base}/status`), 'value', (snap) => {
-                    const val = snap.val();
-                    if (val && typeof val === 'object') {
-                        applyStatusObject(val);
-                    }
+                    applyStatusObject(snap.val());
                 });
             } catch (err) {
                 console.warn('Lỗi khởi tạo Firebase:', err);
@@ -1623,31 +1545,29 @@
 
         document.getElementById('startTimerBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
+                showToast('ESP32 chưa online — chưa thể điều khiển');
                 return;
             }
             state.isRunning = true;
-            state.startDehumRelay = true;
-            sendEsp32Command({ running: 1, startDehumRelay: 1 });
+            if (!sendEsp32Command({ running: 1 })) { state.isRunning = false; showToast('Không gửi được lệnh tới ESP32'); renderUI(); return; }
             renderUI();
             showToast('Đã bật chu trình sấy & rơ-le kích hút ẩm');
         });
 
         document.getElementById('playPauseBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
+                showToast('ESP32 chưa online — chưa thể điều khiển');
                 return;
             }
             state.isRunning = false;
-            state.startDehumRelay = false;
-            sendEsp32Command({ running: 0, startDehumRelay: 0 });
+            if (!sendEsp32Command({ running: 0 })) { showToast('Không gửi được lệnh tới ESP32'); }
             renderUI();
             showToast('Đã tạm dừng chu trình sấy');
         });
 
         document.getElementById('resetTimerBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
+                showToast('ESP32 chưa online — chưa thể điều khiển');
                 return;
             }
             state.elapsedSeconds = 0;
@@ -1830,6 +1750,8 @@
 
             if (state.esp32Connected) {
                 sendEsp32Command();
+            } else {
+                showToast('ESP32 chưa online — cài đặt chưa được gửi');
             }
 
             if (state.simulationMode) {
@@ -1848,12 +1770,8 @@
         // =====================================================================
         setInterval(() => {
             // Nếu ESP32 không đẩy cập nhật mới sau 6 giây (ví dụ bị rút nguồn) thì chuyển sang Không có kết nối ESP32
-            if (state.esp32Connected && lastRemoteActivityMs > 0 && (Date.now() - lastRemoteActivityMs) > 6000) {
-                state.esp32Connected = false;
-                state.hasSensorData = false;
-                if (!state.simulationMode) {
-                    setConnStatus('offline', 'Không có kết nối ESP32');
-                }
+            if (state.esp32Connected && (Date.now() - lastRemoteActivityMs) > ESP_TIMEOUT_MS) {
+                setEsp32Offline();
             } else if (!state.esp32Connected && !state.simulationMode) {
                 setConnStatus('offline', 'Không có kết nối ESP32');
             }
