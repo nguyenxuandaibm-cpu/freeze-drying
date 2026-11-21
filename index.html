@@ -120,40 +120,6 @@
         }
 
         .glass-card-row {
-            background: rgba(255, 255, 255, 0.56);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border: 1.5px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 10px 26px -10px rgba(30, 58, 138, 0.09), inset 0 1px 1.5px rgba(255, 255, 255, 0.98);
-            border-radius: 24px;
-            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
-        }
-
-        @media (hover: hover) {
-            .glass-card-row:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 14px 30px -10px rgba(30, 58, 138, 0.15), inset 0 1px 1px rgba(255, 255, 255, 1);
-            }
-        }
-
-        .glass-pill {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.92);
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
-        }
-
-        /* Thẻ con kính mờ trong bảng Cài Đặt */
-        .settings-glass-item {
-            background: rgba(255, 255, 255, 0.48);
-            backdrop-filter: blur(18px) saturate(170%);
-            -webkit-backdrop-filter: blur(18px) saturate(170%);
-            border: 1.25px solid rgba(255, 255, 255, 0.88);
-            box-shadow: 0 8px 20px -10px rgba(15, 23, 42, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.95);
-        }
-
-        .glass-card-row {
             background: rgba(255, 255, 255, 0.78);
             backdrop-filter: blur(18px) saturate(175%);
             -webkit-backdrop-filter: blur(18px) saturate(175%);
@@ -176,6 +142,15 @@
             -webkit-backdrop-filter: blur(14px);
             border: 1px solid rgba(255, 255, 255, 0.95);
             box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        /* Thẻ con kính mờ trong bảng Cài Đặt */
+        .settings-glass-item {
+            background: rgba(255, 255, 255, 0.48);
+            backdrop-filter: blur(18px) saturate(170%);
+            -webkit-backdrop-filter: blur(18px) saturate(170%);
+            border: 1.25px solid rgba(255, 255, 255, 0.88);
+            box-shadow: 0 8px 20px -10px rgba(15, 23, 42, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.95);
         }
 
         /* ================= HIỆU ỨNG SVG UV XANH DƯƠNG, QUẠT & SƯƠNG MÙ ================= */
@@ -278,7 +253,7 @@
             transform: scale(1.14);
         }
 
-        /* ================= DUAL-HANDLE RANGE SLIDER CHO LỊCH ĐÈN UV (TRẮNG TRONG ĐẬM NHẠT) ================= */
+        /* ================= DUAL-HANDLE RANGE SLIDER CHO LỊCH ĐÈN UV ================= */
         .dual-range-wrap {
             position: relative;
             width: 100%;
@@ -355,7 +330,7 @@
             cursor: grab;
         }
 
-        /* ================= CÔNG TẮC IOS SWITCH (TRẮNG TRONG ĐẬM / NHẠT) ================= */
+        /* ================= CÔNG TẮC IOS SWITCH ================= */
         .ios-switch {
             position: relative;
             display: inline-block;
@@ -370,7 +345,6 @@
             height: 0;
         }
 
-        /* Trạng thái TẮT: trắng trong rất mỏng (nhạt) */
         .ios-slider-toggle {
             position: absolute;
             cursor: pointer;
@@ -395,7 +369,6 @@
             box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
         }
 
-        /* Trạng thái BẬT: trắng sứ đậm nổi bật trên nền kính trong */
         input:checked + .ios-slider-toggle,
         input:checked + .ios-slider-toggle.uv-toggle,
         input:checked + .ios-slider-toggle.sim-toggle {
@@ -451,7 +424,7 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <!-- Container chính (dọc gọn trên điện thoại, căn giữa trên màn hình lớn) -->
+    <!-- Container chính -->
     <div class="relative z-10 w-full max-w-xl mx-auto px-3.5 sm:px-5 py-4 sm:py-6 min-h-[100dvh] flex flex-col gap-4 sm:gap-5">
 
         <!-- =================================================================== -->
@@ -578,7 +551,7 @@
                 </div>
                 <div class="glass-pill px-3 py-1 rounded-full text-slate-700 flex items-center gap-1.5">
                     <span id="connDot" class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
-                    <span id="connText">Mô phỏng Live</span>
+                    <span id="connText">Đang chờ ESP32</span>
                 </div>
             </div>
 
@@ -586,35 +559,29 @@
             <div class="diagram-scale-box rounded-3xl bg-white/45 border border-white/85 p-2.5 sm:p-3">
                 <svg viewBox="0 0 740 420" class="diagram-svg-responsive" role="img" aria-label="Sơ đồ buồng sấy yến và tuần hoàn khí ngược chiều kim đồng hồ">
                     <defs>
-                        <!-- Gradient ánh sáng UV xanh dương -->
                         <linearGradient id="uvLightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop id="uvGradStop1" offset="0%" stop-color="#38bdf8" stop-opacity="0.76"/>
                             <stop id="uvGradStop2" offset="55%" stop-color="#3b82f6" stop-opacity="0.28"/>
                             <stop id="uvGradStop3" offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
                         </linearGradient>
-                        <!-- Gradient ánh sáng trắng khi tắt UV -->
                         <linearGradient id="whiteLightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" stop-color="#ffffff" stop-opacity="0.92"/>
                             <stop offset="65%" stop-color="#f8fafc" stop-opacity="0.45"/>
                             <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
                         </linearGradient>
-                        <!-- Khung nhôm buồng sấy -->
                         <linearGradient id="aluFrameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#94a3b8"/>
                             <stop offset="50%" stop-color="#cbd5e1"/>
                             <stop offset="100%" stop-color="#64748b"/>
                         </linearGradient>
-                        <!-- Kính cường lực 5mm -->
                         <linearGradient id="glassChamberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stop-color="#ffffff" stop-opacity="0.88"/>
                             <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0.58"/>
                         </linearGradient>
-                        <!-- Tổ yến vàng nhạt -->
                         <linearGradient id="nestGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" stop-color="#fef3c7"/>
                             <stop offset="100%" stop-color="#f59e0b"/>
                         </linearGradient>
-                        <!-- Làm mềm sương mù -->
                         <filter id="softPuffBlur" x="-40%" y="-40%" width="180%" height="180%">
                             <feGaussianBlur stdDeviation="2.4"/>
                         </filter>
@@ -622,30 +589,23 @@
 
                     <!-- ================= 1. BUỒNG SẤY 6 KHAY BÊN TRÁI ================= -->
                     <g id="dryingChamberGroup">
-                        <!-- Chân đế cao su -->
                         <rect x="64" y="392" width="32" height="10" rx="5" fill="#334155"/>
                         <rect x="256" y="392" width="32" height="10" rx="5" fill="#334155"/>
 
-                        <!-- Khung nhôm định hình ngoài -->
                         <rect x="42" y="22" width="268" height="372" rx="22" fill="url(#aluFrameGrad)"/>
-                        <!-- Khoang kính cường lực 5mm -->
                         <rect x="52" y="32" width="248" height="352" rx="16" fill="url(#glassChamberGrad)" stroke="#ffffff" stroke-width="1.5"/>
 
-                        <!-- Lớp phủ ánh sáng đèn UV / Trắng trong buồng -->
                         <rect id="svgUvOverlay" x="53" y="33" width="246" height="310" rx="15" fill="url(#uvLightGrad)" class="uv-active"/>
 
-                        <!-- Lớp sương mù tuần hoàn nền trong buồng -->
                         <g id="chamberMistAmbient" opacity="0.58">
                             <ellipse cx="130" cy="135" rx="46" ry="16" fill="#ffffff" filter="url(#softPuffBlur)" class="mist-puff"/>
                             <ellipse cx="220" cy="215" rx="52" ry="18" fill="#e0f2fe" filter="url(#softPuffBlur)" class="mist-puff"/>
                             <ellipse cx="150" cy="295" rx="48" ry="15" fill="#ffffff" filter="url(#softPuffBlur)" class="mist-puff"/>
                         </g>
 
-                        <!-- Thanh đèn UV phía trên trần buồng -->
                         <rect id="svgUvBar" x="108" y="42" width="136" height="9" rx="4.5" fill="rgba(59,130,246,0.28)" stroke="#3b82f6" stroke-width="1.5" class="uv-lamp-glow"/>
                         <text id="svgUvLabel" x="176" y="64" text-anchor="middle" font-size="9.5" font-weight="800" fill="#3b82f6" letter-spacing="0.6">ĐÈN UV TIỆT TRÙNG</text>
 
-                        <!-- 6 Khay inox & các tổ yến -->
                         <g stroke="#94a3b8" stroke-width="2.2" stroke-linecap="round">
                             <line x1="68" y1="92" x2="284" y2="92"/>
                             <line x1="68" y1="142" x2="284" y2="142"/>
@@ -655,19 +615,12 @@
                             <line x1="68" y1="342" x2="284" y2="342"/>
                         </g>
 
-                        <!-- Tổ yến xếp trên 6 khay -->
                         <g fill="url(#nestGrad)" stroke="#d97706" stroke-width="0.9">
-                            <!-- Khay 1 -->
                             <path d="M84,91 Q98,74 112,91 Z"/><path d="M134,91 Q148,74 162,91 Z"/><path d="M184,91 Q198,74 212,91 Z"/><path d="M234,91 Q248,74 262,91 Z"/>
-                            <!-- Khay 2 -->
                             <path d="M84,141 Q98,124 112,141 Z"/><path d="M134,141 Q148,124 162,141 Z"/><path d="M184,141 Q198,124 212,141 Z"/><path d="M234,141 Q248,124 262,141 Z"/>
-                            <!-- Khay 3 -->
                             <path d="M84,191 Q98,174 112,191 Z"/><path d="M188,191 Q202,174 216,191 Z"/><path d="M234,191 Q248,174 262,191 Z"/>
-                            <!-- Khay 4 -->
                             <path d="M84,241 Q98,224 112,241 Z"/><path d="M134,241 Q148,224 162,241 Z"/><path d="M184,241 Q198,224 212,241 Z"/><path d="M234,241 Q248,224 262,241 Z"/>
-                            <!-- Khay 5 -->
                             <path d="M84,291 Q98,274 112,291 Z"/><path d="M134,291 Q148,274 162,291 Z"/><path d="M184,291 Q198,274 212,291 Z"/><path d="M234,291 Q248,274 262,291 Z"/>
-                            <!-- Khay 6 -->
                             <path d="M84,341 Q98,324 112,341 Z"/><path d="M134,341 Q148,324 162,341 Z"/><path d="M184,341 Q198,324 212,341 Z"/><path d="M234,341 Q248,324 262,341 Z"/>
                         </g>
 
@@ -677,30 +630,23 @@
                         <circle cx="176" cy="183" r="3.5" fill="#38bdf8"/>
                         <text x="176" y="209" text-anchor="middle" font-size="9.5" font-weight="800" fill="#1e293b">SHT30</text>
 
-                        <!-- Tay nắm cửa kính bên trái -->
                         <rect x="60" y="185" width="5" height="54" rx="2.5" fill="#475569"/>
-
-                        <!-- Nhãn đáy buồng -->
                         <text x="176" y="369" text-anchor="middle" font-size="9.5" font-weight="800" fill="#334155" letter-spacing="0.4">BUỒNG SẤY 6 KHAY • KÍNH 5MM &amp; NHÔM</text>
                     </g>
 
                     <!-- ================= 2. ỐNG TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ ================= -->
-                    <!-- Ống trên: Block lạnh -> Buồng sấy (Sang trái) -->
                     <rect x="316" y="84" width="152" height="24" rx="12" fill="rgba(255,255,255,0.72)" stroke="#bae6fd" stroke-width="1.5"/>
                     <text x="392" y="76" text-anchor="middle" font-size="9.5" font-weight="700" fill="#0284c7">← Khí lạnh khô vào buồng</text>
                     <path d="M352,90 L341,96 L352,102" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 
-                    <!-- Ống dưới: Buồng sấy -> Fujihome DH07 (Sang phải) -->
                     <rect x="316" y="310" width="152" height="24" rx="12" fill="rgba(255,255,255,0.72)" stroke="#c7d2fe" stroke-width="1.5"/>
                     <text x="392" y="350" text-anchor="middle" font-size="9.5" font-weight="700" fill="#4f46e5">Khí ẩm thoát ra →</text>
                     <path d="M432,316 L443,322 L432,328" fill="none" stroke="#4f46e5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 
-                    <!-- Ống đứng bên phải: Fujihome DH07 -> Block lạnh (Đi lên) -->
                     <rect x="592" y="168" width="24" height="84" rx="12" fill="rgba(255,255,255,0.72)" stroke="#bae6fd" stroke-width="1.5"/>
                     <text x="625" y="214" font-size="9.5" font-weight="700" fill="#0284c7">↑ Khí khô lên dàn lạnh</text>
                     <path d="M598,194 L604,183 L610,194" fill="none" stroke="#0284c7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 
-                    <!-- Hạt sương mù chuyển động ngược chiều kim đồng hồ -->
                     <g id="mistParticlesLayer"></g>
 
                     <!-- ================= 3. TẦNG TRÊN PHẢI: BLOCK MÁY NƯỚC LẠNH ================= -->
@@ -712,12 +658,10 @@
                         <text x="624" y="54" text-anchor="middle" font-size="11.5" font-weight="800" fill="#0f172a">BLOCK MÁY NƯỚC LẠNH</text>
                         <text x="624" y="68" text-anchor="middle" font-size="9" font-weight="600" fill="#0284c7">Dàn lạnh phụ hạ nhiệt luồng khí</text>
 
-                        <!-- Biểu tượng ống đồng dàn lạnh -->
                         <rect x="482" y="78" width="88" height="76" rx="14" fill="rgba(240,249,255,0.9)" stroke="#7dd3fc" stroke-width="1.4"/>
                         <path d="M494,92 H558 C563,92 563,104 558,104 H494 C489,104 489,116 494,116 H558 C563,116 563,128 558,128 H494 C489,128 489,140 494,140 H558"
                               fill="none" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
 
-                        <!-- Thẻ trạng thái Block lạnh -->
                         <rect x="578" y="78" width="124" height="76" rx="14" fill="rgba(255,255,255,0.88)" stroke="#e2e8f0" stroke-width="1.2"/>
                         <circle id="svgChillerLed" cx="592" cy="95" r="4.5" fill="#0ea5e9"/>
                         <text id="svgChillerStatus" x="602" y="99" font-size="10.5" font-weight="800" fill="#0369a1">Đang làm mát</text>
@@ -734,7 +678,6 @@
                         <text x="624" y="276" text-anchor="middle" font-size="11.5" font-weight="800" fill="#0f172a">FUJIHOME DH07</text>
                         <text x="624" y="290" text-anchor="middle" font-size="9" font-weight="600" fill="#64748b">Máy hút ẩm ngưng tụ • 80 m³/h</text>
 
-                        <!-- Cánh quạt hút ẩm -->
                         <circle cx="526" cy="338" r="34" fill="rgba(248,250,252,0.95)" stroke="#94a3b8" stroke-width="1.5"/>
                         <g id="svgDh07Fan" class="fan-spinning">
                             <path d="M526,338 L520,310 L532,310 Z" fill="#6366f1"/>
@@ -744,7 +687,6 @@
                             <circle cx="526" cy="338" r="6" fill="#1e293b"/>
                         </g>
 
-                        <!-- Thẻ trạng thái DH07 -->
                         <rect x="572" y="300" width="130" height="76" rx="14" fill="rgba(255,255,255,0.88)" stroke="#e2e8f0" stroke-width="1.2"/>
                         <circle id="svgDh07Led" cx="586" cy="317" r="4.5" fill="#22c55e"/>
                         <text id="svgDh07Status" x="596" y="321" font-size="10.5" font-weight="800" fill="#15803d">Đang tách ẩm</text>
@@ -757,7 +699,7 @@
 
         <!-- Ghi chú chân trang -->
         <footer class="text-center text-[11px] font-semibold text-slate-500 pb-2">
-            Máy Sấy Lạnh Tổ Yến • Tuần hoàn ngược kim đồng hồ • Sẵn sàng MQTT ESP32-C3
+            Máy Sấy Lạnh Tổ Yến • Tuần hoàn ngược kim đồng hồ • Đồng bộ Firebase ESP32-C3
         </footer>
     </div>
 
@@ -768,10 +710,8 @@
         <div class="modal-sheet w-full max-w-lg rounded-t-[32px] sm:rounded-[34px] p-5 sm:p-6 pb-8 sm:pb-6
                     text-slate-800 max-h-[90dvh] overflow-y-auto">
 
-            <!-- Tay nắm kéo iOS -->
             <div class="w-10 h-1.5 rounded-full bg-white/80 mx-auto mb-3.5 sm:hidden"></div>
 
-            <!-- Tiêu đề -->
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold text-slate-800">Cài Đặt Máy Sấy Tổ Yến</h2>
@@ -848,7 +788,7 @@
                     </div>
                 </div>
 
-                <!-- 4. Bật/tắt đèn UV & thanh trượt khoảng đôi (bước 15 phút) -->
+                <!-- 4. Bật/tắt đèn UV & thanh trượt khoảng đôi -->
                 <div class="settings-glass-item p-3.5 sm:p-4 rounded-3xl">
                     <div class="flex items-center justify-between gap-2 mb-2">
                         <div class="min-w-0">
@@ -875,7 +815,6 @@
                             </span>
                         </div>
 
-                        <!-- Thanh trượt khoảng đôi (Dual-handle range slider) -->
                         <div class="dual-range-wrap">
                             <div class="dual-track-bg"></div>
                             <div id="uvDualFill" class="dual-track-fill"></div>
@@ -896,11 +835,11 @@
                     </div>
                 </div>
 
-                <!-- 5. Mô phỏng / MQTT ESP32-C3 -->
+                <!-- 5. Mô phỏng dữ liệu Live -->
                 <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3">
                     <div class="min-w-0">
                         <div class="text-xs font-bold text-slate-800">Mô phỏng dữ liệu Live</div>
-                        <div class="text-[10px] text-slate-600">Mặc định TẮT để chỉ chạy khi có kết nối ESP32-C3</div>
+                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có ESP32 gửi dữ liệu</div>
                     </div>
                     <label class="ios-switch">
                         <input id="inputSimMode" type="checkbox">
@@ -921,14 +860,14 @@
                             placeholder="https://freeze-drying-default-rtdb.firebaseio.com/">
                     </div>
                     <div>
-                        <label for="inputFirebasePath" class="block text-[10px] font-bold text-slate-600 mb-1">Base Path (khớp với ESP32)</label>
+                        <label for="inputFirebasePath" class="block text-[10px] font-bold text-slate-600 mb-1">Base Path (hỗ trợ cả /may_say và /may_say_yen/esp32c3)</label>
                         <input id="inputFirebasePath" type="text"
                             class="w-full px-3 py-2 rounded-xl text-xs font-medium bg-white/80 border border-white focus:outline-none focus:ring-2 focus:ring-sky-400 text-slate-800"
-                            placeholder="/may_say_yen/esp32c3">
+                            placeholder="/may_say">
                     </div>
                 </div>
 
-                <!-- Nút Lưu trắng trong đậm nổi khối kiểu iPhone -->
+                <!-- Nút Lưu -->
                 <button id="saveSettingsBtn" type="button"
                     class="w-full min-h-[48px] py-3.5 rounded-2xl font-extrabold text-slate-900 bg-white/92 hover:bg-white backdrop-blur-xl active:scale-[0.98] border border-white transition shadow-[0_12px_28px_-8px_rgba(15,23,42,0.16),inset_0_1.5px_1px_#ffffff] cursor-pointer">
                     Lưu & Áp Dụng Cài Đặt
@@ -953,8 +892,9 @@
             isRunning: false,
             simulationMode: false,
             esp32Connected: false,
-            currentTemp: 0.0,
-            currentHum: 0.0,
+            hasSensorData: false,
+            currentTemp: 29.8,
+            currentHum: 35.5,
             targetTemp: 30.0,
             targetHum: 35,
             totalHours: 24,
@@ -971,17 +911,16 @@
         };
 
         let firebaseDb = null;
-        let firebaseStatusRef = null;
-        let firebaseConnRef = null;
+        let listeners = [];
         let lastRemotePushMs = 0;
-        let lastRemoteStatusMs = 0;
+        let lastRemoteActivityMs = 0;
 
         const FIREBASE_CONFIG = {
             databaseURL: 'https://freeze-drying-default-rtdb.firebaseio.com/',
-            basePath: '/may_say_yen/esp32c3'
+            basePath: '/may_say'
         };
 
-        const FIREBASE_STORAGE_KEY = 'may_say_yen_firebase_cfg_v1';
+        const FIREBASE_STORAGE_KEY = 'may_say_yen_firebase_cfg_v2';
 
         function normalizeFirebaseUrl(rawUrl) {
             let url = String(rawUrl || '').trim();
@@ -997,10 +936,10 @@
 
         function normalizeFirebasePath(rawPath) {
             let path = String(rawPath || '').trim();
-            if (!path) return '/may_say_yen/esp32c3';
+            if (!path) return '/may_say';
             if (!path.startsWith('/')) path = '/' + path;
             path = path.replace(/\/+$/, '');
-            return path || '/may_say_yen/esp32c3';
+            return path || '/may_say';
         }
 
         function loadSavedFirebaseConfig() {
@@ -1058,6 +997,9 @@
             if (!state.uvAutoEnabled) {
                 return { active: false, label: 'Đèn UV tắt' };
             }
+            if ((state.esp32Connected || state.simulationMode) && state.isRunning && state.uvRunningFromEsp) {
+                return { active: true, label: 'Đang chiếu UV' };
+            }
             const elapsedMins = Math.floor((state.elapsedSeconds || 0) / 60);
             const startM = Math.min(state.uvStartMin, state.uvEndMin);
             const endM = Math.max(state.uvStartMin, state.uvEndMin);
@@ -1072,7 +1014,8 @@
             const layer = document.getElementById('mistParticlesLayer');
             if (!layer) return;
 
-            if (!state.esp32Connected || !state.isRunning) {
+            const activeStream = (state.esp32Connected || state.simulationMode) && state.isRunning;
+            if (!activeStream) {
                 layer.innerHTML = '';
                 return;
             }
@@ -1088,19 +1031,16 @@
                 let color = '#0284c7';
 
                 if (p < 0.42) {
-                    // Ống trên: đi sang trái vào buồng sấy
                     const k = p / 0.42;
                     x = 460 - k * 140;
                     y = 96 + Math.sin(k * Math.PI * 2 + i) * 3;
                     color = '#0284c7';
                 } else if (p < 0.78) {
-                    // Ống dưới: đi sang phải tới Fujihome DH07
                     const k = (p - 0.42) / 0.36;
                     x = 320 + k * 150;
                     y = 322 + Math.cos(k * Math.PI * 2 + i) * 3;
                     color = '#4f46e5';
                 } else {
-                    // Ống đứng phải: đi lên tới Block máy nước lạnh
                     const k = (p - 0.78) / 0.22;
                     x = 604 + Math.sin(k * Math.PI * 2 + i) * 2.5;
                     y = 248 - k * 76;
@@ -1114,8 +1054,9 @@
             layer.innerHTML = markup;
         }
 
+        // Cho phép điều khiển khi có kết nối ESP32 hoặc đang bật chế độ Mô phỏng Live
         function isControlAllowed() {
-            return Boolean(state.esp32Connected);
+            return Boolean(state.esp32Connected || state.simulationMode);
         }
 
         function syncControlLockState() {
@@ -1128,11 +1069,10 @@
             if (startBtn) startBtn.disabled = !allowed;
             if (pauseBtn) pauseBtn.disabled = !allowed;
             if (resetBtn) resetBtn.disabled = !allowed;
-            if (saveBtn) saveBtn.disabled = !allowed;
+            if (saveBtn) saveBtn.disabled = false;
 
             const modalInputs = document.querySelectorAll('#settingsModal input, #settingsModal .preset-hour-btn');
             modalInputs.forEach(el => {
-                // Luôn cho phép chỉnh URL/Path Firebase và công tắc Mô phỏng để người dùng cấu hình kết nối
                 if (el.id === 'inputSimMode' || el.id === 'inputFirebaseUrl' || el.id === 'inputFirebasePath') {
                     el.disabled = false;
                 } else {
@@ -1142,10 +1082,6 @@
         }
 
         function sendEsp32Command(extraFields = {}) {
-            if (!isControlAllowed()) {
-                showToast('Không có kết nối ESP32 — không thể điều khiển');
-                return false;
-            }
             if (!firebaseDb) {
                 initFirebaseHook();
             }
@@ -1153,8 +1089,10 @@
 
             try {
                 lastRemotePushMs = Date.now();
-                const cmdRef = firebaseDb.ref(`${FIREBASE_CONFIG.basePath}/cmd`);
-                cmdRef.update({
+                const base = FIREBASE_CONFIG.basePath;
+
+                // Ghi đồng bộ vào cả /cmd và nhánh trực tiếp để tương thích mọi bản firmware
+                const payload = {
                     running: state.isRunning ? 1 : 0,
                     targetTemp: state.targetTemp,
                     targetHum: state.targetHum,
@@ -1162,9 +1100,17 @@
                     uvAuto: state.uvAutoEnabled ? 1 : 0,
                     uvStartMin: state.uvStartMin,
                     uvEndMin: state.uvEndMin,
+                    startDehumRelay: state.isRunning ? 1 : 0,
                     updatedAt: Date.now(),
                     ...extraFields
-                });
+                };
+
+                firebaseDb.ref(`${base}/cmd`).update(payload);
+                firebaseDb.ref(`${base}/running`).set(state.isRunning ? 1 : 0);
+                firebaseDb.ref(`${base}/startDehumRelay`).set(state.isRunning ? 1 : 0);
+                if (Object.prototype.hasOwnProperty.call(extraFields, 'resetElapsed')) {
+                    firebaseDb.ref(`${base}/elapsedSeconds`).set(0);
+                }
                 return true;
             } catch (err) {
                 console.warn('Lỗi gửi lệnh Firebase tới ESP32-C3:', err);
@@ -1172,19 +1118,28 @@
             }
         }
 
-        function applyRemoteStatusPayload(data) {
-            if (!data || typeof data !== 'object') return;
-            lastRemoteStatusMs = Date.now();
+        function markEsp32Active() {
+            lastRemoteActivityMs = Date.now();
             state.esp32Connected = true;
+            setConnStatus('online', 'ESP32-C3 Online');
+        }
 
-            // Tránh ghi đè tức thời trong 1.5 giây sau khi người dùng vừa bấm lệnh mới
+        function applyStatusObject(data) {
+            if (!data || typeof data !== 'object') return;
+            markEsp32Active();
+
             const recentLocalCmd = (Date.now() - lastRemotePushMs) < 1500;
 
-            if (typeof data.temp === 'number' && !Number.isNaN(data.temp)) {
-                state.currentTemp = data.temp;
+            const tempVal = typeof data.temp === 'number' ? data.temp : (typeof data.nhiet_do === 'number' ? data.nhiet_do : null);
+            const humVal  = typeof data.hum === 'number' ? data.hum : (typeof data.do_am === 'number' ? data.do_am : null);
+
+            if (tempVal !== null && !Number.isNaN(tempVal)) {
+                state.currentTemp = tempVal;
+                state.hasSensorData = true;
             }
-            if (typeof data.hum === 'number' && !Number.isNaN(data.hum)) {
-                state.currentHum = data.hum;
+            if (humVal !== null && !Number.isNaN(humVal)) {
+                state.currentHum = humVal;
+                state.hasSensorData = true;
             }
             if (!recentLocalCmd && typeof data.elapsedSeconds === 'number' && !Number.isNaN(data.elapsedSeconds)) {
                 state.elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
@@ -1201,72 +1156,32 @@
             if (typeof data.uvRunning === 'number') {
                 state.uvRunningFromEsp = data.uvRunning !== 0;
             }
-
-            if (!recentLocalCmd) {
-                if (typeof data.running === 'number') {
-                    state.isRunning = data.running !== 0;
-                }
-                if (typeof data.targetTemp === 'number' && !Number.isNaN(data.targetTemp)) {
-                    state.targetTemp = data.targetTemp;
-                }
-                if (typeof data.targetHum === 'number' && !Number.isNaN(data.targetHum)) {
-                    state.targetHum = data.targetHum;
-                }
-                if (typeof data.totalHours === 'number' && !Number.isNaN(data.totalHours)) {
-                    state.totalHours = data.totalHours;
-                }
-                if (typeof data.uvAuto === 'number') {
-                    state.uvAutoEnabled = data.uvAuto !== 0;
-                }
-                if (typeof data.uvStartMin === 'number' && !Number.isNaN(data.uvStartMin)) {
-                    state.uvStartMin = data.uvStartMin;
-                }
-                if (typeof data.uvEndMin === 'number' && !Number.isNaN(data.uvEndMin)) {
-                    state.uvEndMin = data.uvEndMin;
-                }
+            if (!recentLocalCmd && typeof data.running === 'number') {
+                state.isRunning = data.running !== 0;
             }
 
-            setConnStatus('online', 'ESP32-C3 Online');
             renderUI();
         }
 
-        function getUvScheduleState() {
-            if (!state.uvAutoEnabled) {
-                return { active: false, label: 'Đèn UV tắt' };
-            }
-            if (state.esp32Connected && state.isRunning && state.uvRunningFromEsp) {
-                return { active: true, label: 'Đang chiếu UV' };
-            }
-            const elapsedMins = Math.floor((state.elapsedSeconds || 0) / 60);
-            const startM = Math.min(state.uvStartMin, state.uvEndMin);
-            const endM = Math.max(state.uvStartMin, state.uvEndMin);
-            const isInWindow = elapsedMins >= startM && elapsedMins < endM;
-            return {
-                active: isInWindow,
-                label: isInWindow ? 'Đang chiếu UV' : 'Chờ lịch UV'
-            };
+        function stopFirebaseHook() {
+            listeners.forEach(({ ref, event, cb }) => {
+                try { ref.off(event, cb); } catch (_) {}
+            });
+            listeners = [];
         }
 
-        function stopFirebaseHook() {
-            state.esp32Connected = false;
-            if (firebaseStatusRef) {
-                try { firebaseStatusRef.off(); } catch (_) {}
-                firebaseStatusRef = null;
-            }
-            if (firebaseConnRef) {
-                try { firebaseConnRef.off(); } catch (_) {}
-                firebaseConnRef = null;
-            }
+        function attachListener(ref, event, cb) {
+            ref.on(event, cb);
+            listeners.push({ ref, event, cb });
         }
 
         function initFirebaseHook() {
             if (typeof firebase === 'undefined') {
-                state.esp32Connected = false;
                 setConnStatus('offline', 'Không có kết nối ESP32');
                 return;
             }
             try {
-                const appName = 'esp32c3_dryer_app';
+                const appName = 'esp32c3_dryer_app_v2';
                 let targetApp = firebase.apps.find(a => a.name === appName);
                 if (!targetApp) {
                     targetApp = firebase.initializeApp({
@@ -1274,42 +1189,78 @@
                     }, appName);
                 }
                 firebaseDb = targetApp.database();
-
                 stopFirebaseHook();
-                setConnStatus('offline', 'Không có kết nối ESP32');
 
-                // Theo dõi trạng thái kết nối tới Firebase Realtime Database
-                firebaseConnRef = firebaseDb.ref('.info/connected');
-                firebaseConnRef.on('value', (snap) => {
-                    if (snap.val() !== true) {
-                        state.esp32Connected = false;
-                        setConnStatus('offline', 'Không có kết nối ESP32');
+                const base = FIREBASE_CONFIG.basePath;
+
+                // 1. Lắng nghe cấu trúc cũ (/may_say/nhiet_do, /may_say/do_am) và cấu trúc mới
+                attachListener(firebaseDb.ref(`${base}/nhiet_do`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (typeof v === 'number' && !Number.isNaN(v)) {
+                        state.currentTemp = v;
+                        state.hasSensorData = true;
+                        markEsp32Active();
                         renderUI();
                     }
                 });
 
-                // Lắng nghe dữ liệu trạng thái thực tế từ ESP32-C3
-                firebaseStatusRef = firebaseDb.ref(`${FIREBASE_CONFIG.basePath}/status`);
-                firebaseStatusRef.on('value', (snapshot) => {
-                    const val = snapshot.val();
-                    if (val && typeof val === 'object') {
-                        applyRemoteStatusPayload(val);
-                    } else {
-                        state.esp32Connected = false;
-                        setConnStatus('offline', 'Không có kết nối ESP32');
+                attachListener(firebaseDb.ref(`${base}/do_am`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (typeof v === 'number' && !Number.isNaN(v)) {
+                        state.currentHum = v;
+                        state.hasSensorData = true;
+                        markEsp32Active();
                         renderUI();
                     }
-                }, (err) => {
-                    console.warn('Lỗi đọc Firebase status:', err);
-                    state.esp32Connected = false;
-                    setConnStatus('offline', 'Không có kết nối ESP32');
-                    renderUI();
+                });
+
+                attachListener(firebaseDb.ref(`${base}/temp`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (typeof v === 'number' && !Number.isNaN(v)) {
+                        state.currentTemp = v;
+                        state.hasSensorData = true;
+                        markEsp32Active();
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/hum`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (typeof v === 'number' && !Number.isNaN(v)) {
+                        state.currentHum = v;
+                        state.hasSensorData = true;
+                        markEsp32Active();
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/running`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (v !== null && v !== undefined && (Date.now() - lastRemotePushMs) >= 1500) {
+                        state.isRunning = Number(v) !== 0;
+                        markEsp32Active();
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/startDehumRelay`), 'value', (snap) => {
+                    const v = snap.val();
+                    if (v !== null && v !== undefined) {
+                        state.startDehumRelay = Number(v) !== 0;
+                        markEsp32Active();
+                        renderUI();
+                    }
+                });
+
+                attachListener(firebaseDb.ref(`${base}/status`), 'value', (snap) => {
+                    const val = snap.val();
+                    if (val && typeof val === 'object') {
+                        applyStatusObject(val);
+                    }
                 });
             } catch (err) {
                 console.warn('Lỗi khởi tạo Firebase:', err);
-                state.esp32Connected = false;
                 setConnStatus('offline', 'Không có kết nối ESP32');
-                renderUI();
             }
         }
 
@@ -1318,20 +1269,13 @@
         // =====================================================================
         let lastUvActiveState = null;
 
-        /**
-         * Đổi màu đèn UV và ánh sáng hắt vào buồng sấy khi UV đang bật
-         * @param {string} hexColor - Mã màu hex (mặc định '#3b82f6')
-         */
         function setUvLightColor(hexColor = '#3b82f6') {
             const clean = String(hexColor || '#3b82f6').replace('#', '').trim();
             const fullHex = clean.length === 3
                 ? clean.split('').map(ch => ch + ch).join('')
                 : clean;
 
-            if (!/^[0-9a-fA-F]{6}$/.test(fullHex)) {
-                console.warn('Mã màu UV không hợp lệ:', hexColor);
-                return;
-            }
+            if (!/^[0-9a-fA-F]{6}$/.test(fullHex)) return;
 
             const num = parseInt(fullHex, 16);
             const r = (num >> 16) & 255;
@@ -1356,30 +1300,15 @@
             const stop1 = document.getElementById('uvGradStop1');
             const stop2 = document.getElementById('uvGradStop2');
             const stop3 = document.getElementById('uvGradStop3');
-            if (stop1) {
-                stop1.setAttribute('stop-color', brightHex);
-                stop1.setAttribute('stop-opacity', '0.76');
-            }
-            if (stop2) {
-                stop2.setAttribute('stop-color', finalHex);
-                stop2.setAttribute('stop-opacity', '0.28');
-            }
-            if (stop3) {
-                stop3.setAttribute('stop-color', finalHex);
-                stop3.setAttribute('stop-opacity', '0');
-            }
+            if (stop1) { stop1.setAttribute('stop-color', brightHex); stop1.setAttribute('stop-opacity', '0.76'); }
+            if (stop2) { stop2.setAttribute('stop-color', finalHex); stop2.setAttribute('stop-opacity', '0.28'); }
+            if (stop3) { stop3.setAttribute('stop-color', finalHex); stop3.setAttribute('stop-opacity', '0'); }
 
             if (lastUvActiveState !== null) {
                 syncUvVisualState(lastUvActiveState);
             }
         }
 
-        /**
-         * Đồng bộ màu sắc đèn UV và ánh sáng buồng sấy:
-         * - Bật UV: phát sáng xanh dương (#3b82f6 / #38bdf8)
-         * - Tắt UV: chuyển hẳn về màu trắng tinh khiết (#ffffff / rgba(255,255,255,0.88))
-         * @param {boolean} isUvActive
-         */
         function syncUvVisualState(isUvActive) {
             const active = Boolean(isUvActive);
             lastUvActiveState = active;
@@ -1461,42 +1390,43 @@
         }
 
         // =====================================================================
-        // 6. CẬP NHẬT GIAO DIỆN (RENDER SIMULATION / RENDER UI)
+        // 3. CẬP NHẬT GIAO DIỆN
         // =====================================================================
         function renderSimulation() {
             const uvState = getUvScheduleState();
-            const canAct = state.esp32Connected && state.isRunning;
-            const uvIsGlowing = canAct && uvState.active;
-            syncUvVisualState(uvIsGlowing);
+            const canAct = (state.esp32Connected || state.simulationMode) && state.isRunning;
+            syncUvVisualState(canAct && uvState.active);
             const readoutEl = document.getElementById('modalUvLiveReadout');
             if (readoutEl) {
-                readoutEl.textContent = state.esp32Connected ? uvState.label : 'Không có kết nối ESP32';
+                readoutEl.textContent = isControlAllowed() ? uvState.label : 'Chờ dữ liệu ESP32';
             }
         }
 
         function renderUI() {
             syncControlLockState();
 
-            const connected = state.esp32Connected;
+            const hasLiveOrSim = state.esp32Connected || state.simulationMode;
+            const showValues = state.hasSensorData || state.simulationMode;
+
             const dispTempEl = document.getElementById('dispTemp');
             const dispHumEl = document.getElementById('dispHum');
             const lblTargetTempEl = document.getElementById('lblTargetTemp');
             const lblTargetHumEl = document.getElementById('lblTargetHum');
             const dispDewEl = document.getElementById('dispDew');
 
-            if (dispTempEl) dispTempEl.textContent = connected ? state.currentTemp.toFixed(1) : '--.-';
-            if (dispHumEl) dispHumEl.textContent = connected ? state.currentHum.toFixed(1) : '--.-';
+            if (dispTempEl) dispTempEl.textContent = showValues ? state.currentTemp.toFixed(1) : '--.-';
+            if (dispHumEl) dispHumEl.textContent = showValues ? state.currentHum.toFixed(1) : '--.-';
             if (lblTargetTempEl) lblTargetTempEl.textContent = state.targetTemp.toFixed(1) + '°C';
             if (lblTargetHumEl) lblTargetHumEl.textContent = state.targetHum + '%';
-            if (dispDewEl) dispDewEl.textContent = connected ? (calcDewPoint(state.currentTemp, state.currentHum) + '°C') : '--.-°C';
+            if (dispDewEl) dispDewEl.textContent = showValues ? (calcDewPoint(state.currentTemp, state.currentHum) + '°C') : '--.-°C';
 
-            const activeRun = connected && state.isRunning;
+            const activeRun = hasLiveOrSim && state.isRunning;
 
             const tempBadge = document.getElementById('badgeTempState');
             if (tempBadge) {
-                if (!connected) {
-                    tempBadge.textContent = 'Mất kết nối ESP32';
-                    tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700';
+                if (!hasLiveOrSim) {
+                    tempBadge.textContent = 'Chờ kết nối';
+                    tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
                 } else if (!state.isRunning) {
                     tempBadge.textContent = 'Tạm dừng';
                     tempBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
@@ -1511,9 +1441,9 @@
 
             const humBadge = document.getElementById('badgeHumState');
             if (humBadge) {
-                if (!connected) {
-                    humBadge.textContent = 'Mất kết nối ESP32';
-                    humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-700';
+                if (!hasLiveOrSim) {
+                    humBadge.textContent = 'Chờ kết nối';
+                    humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
                 } else if (!state.isRunning) {
                     humBadge.textContent = 'Nghỉ';
                     humBadge.className = 'inline-block mt-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-600';
@@ -1556,11 +1486,7 @@
             const sysBadgeText = document.getElementById('sysBadgeText');
             const chamberMist = document.getElementById('chamberMistAmbient');
 
-            if (!connected) {
-                if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
-                if (sysBadgeText) sysBadgeText.textContent = 'KHÔNG CÓ KẾT NỐI ESP32 • HỆ THỐNG ĐÃ DỪNG';
-                if (chamberMist) chamberMist.style.opacity = '0';
-            } else if (activeRun) {
+            if (activeRun) {
                 if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0';
                 if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG ĐANG SẤY • TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ';
                 if (chamberMist) chamberMist.style.opacity = '0.58';
@@ -1570,17 +1496,16 @@
                 if (chamberMist) chamberMist.style.opacity = '0.12';
             }
 
-            const chillerActive = activeRun && state.chillerRunning;
+            const chillerActive = activeRun && (state.simulationMode ? true : state.chillerRunning);
             const chillerLedEl = document.getElementById('svgChillerLed');
             const chillerStatusEl = document.getElementById('svgChillerStatus');
             if (chillerLedEl) chillerLedEl.setAttribute('fill', chillerActive ? '#0ea5e9' : '#94a3b8');
             if (chillerStatusEl) {
-                chillerStatusEl.textContent = !connected ? 'Mất kết nối' : (chillerActive ? 'Đang làm mát' : (state.isRunning ? 'Đủ nhiệt' : 'Tạm dừng'));
+                chillerStatusEl.textContent = chillerActive ? 'Đang làm mát' : (state.isRunning ? 'Đủ nhiệt' : 'Tạm dừng');
                 chillerStatusEl.setAttribute('fill', chillerActive ? '#0369a1' : '#64748b');
             }
 
-            // Chỉ khi đã kết nối ESP32 và đã bấm "Bắt đầu" (activeRun) thì quạt hút ẩm mới quay và báo "Đang tách ẩm"
-            const dh07Active = activeRun;
+            const dh07Active = activeRun && (state.simulationMode ? true : (state.startDehumRelay || state.dh07Running || true));
             const dh07Fan = document.getElementById('svgDh07Fan');
             if (dh07Fan) {
                 if (dh07Active) dh07Fan.classList.add('fan-spinning');
@@ -1591,9 +1516,7 @@
             const dh07StatusEl = document.getElementById('svgDh07Status');
             if (dh07LedEl) dh07LedEl.setAttribute('fill', dh07Active ? '#22c55e' : '#94a3b8');
             if (dh07StatusEl) {
-                dh07StatusEl.textContent = !connected
-                    ? 'Mất kết nối'
-                    : (dh07Active ? 'Đang tách ẩm' : 'Tạm dừng');
+                dh07StatusEl.textContent = dh07Active ? 'Đang tách ẩm' : 'Tạm dừng';
                 dh07StatusEl.setAttribute('fill', dh07Active ? '#15803d' : '#64748b');
             }
         }
@@ -1620,7 +1543,7 @@
         }
 
         // =====================================================================
-        // 7. TƯƠNG TÁC THỜI GIAN & MODAL CÀI ĐẶT
+        // 4. TƯƠNG TÁC THỜI GIAN & MODAL CÀI ĐẶT
         // =====================================================================
         document.getElementById('toggleTimerModeBtn').addEventListener('click', () => {
             state.showElapsed = !state.showElapsed;
@@ -1629,38 +1552,37 @@
 
         document.getElementById('startTimerBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
                 return;
             }
             state.isRunning = true;
-            if (sendEsp32Command({ running: 1 })) {
-                renderUI();
-                showToast('Đã gửi lệnh Bắt đầu sấy tới ESP32-C3');
-            }
+            state.startDehumRelay = true;
+            sendEsp32Command({ running: 1, startDehumRelay: 1 });
+            renderUI();
+            showToast('Đã bật chu trình sấy & rơ-le kích hút ẩm');
         });
 
         document.getElementById('playPauseBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
                 return;
             }
             state.isRunning = false;
-            if (sendEsp32Command({ running: 0 })) {
-                renderUI();
-                showToast('Đã tạm dừng chu trình sấy trên ESP32-C3');
-            }
+            state.startDehumRelay = false;
+            sendEsp32Command({ running: 0, startDehumRelay: 0 });
+            renderUI();
+            showToast('Đã tạm dừng chu trình sấy');
         });
 
         document.getElementById('resetTimerBtn').addEventListener('click', () => {
             if (!isControlAllowed()) {
-                showToast('Không có kết nối ESP32 — không thể điều khiển');
+                showToast('Chưa có dữ liệu ESP32 — hãy bật Mô phỏng hoặc kiểm tra Firebase');
                 return;
             }
             state.elapsedSeconds = 0;
-            if (sendEsp32Command({ resetElapsed: 1 })) {
-                renderUI();
-                showToast('Đã đặt lại thời gian sấy về 00:00:00');
-            }
+            sendEsp32Command({ resetElapsed: 1 });
+            renderUI();
+            showToast('Đã đặt lại thời gian sấy về 00:00:00');
         });
 
         const settingsModal = document.getElementById('settingsModal');
@@ -1684,14 +1606,8 @@
             let startVal = parseInt(inputUvStart.value, 10);
             let endVal = parseInt(inputUvEnd.value, 10);
 
-            if (endVal > maxMin) {
-                endVal = maxMin;
-                inputUvEnd.value = endVal;
-            }
-            if (startVal > Math.max(0, maxMin - minGap)) {
-                startVal = Math.max(0, maxMin - minGap);
-                inputUvStart.value = startVal;
-            }
+            if (endVal > maxMin) { endVal = maxMin; inputUvEnd.value = endVal; }
+            if (startVal > Math.max(0, maxMin - minGap)) { startVal = Math.max(0, maxMin - minGap); inputUvStart.value = startVal; }
 
             if (changedHandle === 'start' && startVal > endVal - minGap) {
                 startVal = Math.max(0, endVal - minGap);
@@ -1800,6 +1716,18 @@
             renderSimulation();
         });
 
+        document.getElementById('inputSimMode').addEventListener('change', (e) => {
+            state.simulationMode = Boolean(e.target.checked);
+            if (state.simulationMode) {
+                setConnStatus('sim', 'Mô phỏng Live');
+            } else if (state.esp32Connected) {
+                setConnStatus('online', 'ESP32-C3 Online');
+            } else {
+                setConnStatus('offline', 'Không có kết nối ESP32');
+            }
+            renderUI();
+        });
+
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
             const prevUrl = FIREBASE_CONFIG.databaseURL;
             const prevPath = FIREBASE_CONFIG.basePath;
@@ -1809,20 +1737,11 @@
             );
             const configChanged = (prevUrl !== FIREBASE_CONFIG.databaseURL) || (prevPath !== FIREBASE_CONFIG.basePath);
 
-            state.simulationMode = false;
-            const simInput = document.getElementById('inputSimMode');
-            if (simInput) simInput.checked = false;
+            state.simulationMode = Boolean(document.getElementById('inputSimMode').checked);
 
-            if (!firebaseStatusRef || configChanged) {
+            if (!listeners.length || configChanged) {
                 firebaseDb = null;
                 initFirebaseHook();
-            }
-
-            if (!isControlAllowed()) {
-                renderUI();
-                closeSettingsModal();
-                showToast('Không có kết nối ESP32 — đã cập nhật cấu hình kết nối');
-                return;
             }
 
             const newHours = parseInt(inputTotalHours.value, 10);
@@ -1838,42 +1757,46 @@
             state.uvStartMin = parseInt(inputUvStart.value, 10);
             state.uvEndMin = parseInt(inputUvEnd.value, 10);
 
-            sendEsp32Command();
+            if (state.esp32Connected) {
+                sendEsp32Command();
+            }
+
+            if (state.simulationMode) {
+                setConnStatus('sim', 'Mô phỏng Live');
+            } else if (!state.esp32Connected) {
+                setConnStatus('offline', 'Không có kết nối ESP32');
+            }
+
             renderUI();
             closeSettingsModal();
-            showToast('Đã lưu cài đặt sấy & đồng bộ ESP32-C3');
+            showToast('Đã lưu & áp dụng cài đặt');
         });
 
         // =====================================================================
-        // 8. VÒNG LẶP ĐỒNG HỒ MỖI GIÂY & HOẠT CẢNH SƯƠNG MÙ
+        // 5. VÒNG LẶP ĐỒNG HỒ MỖI GIÂY & HOẠT CẢNH SƯƠNG MÙ
         // =====================================================================
         setInterval(() => {
-            if (!state.esp32Connected) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
-                renderUI();
-                return;
-            }
-
-            // Nếu quá 12 giây không nhận được heartbeat status từ ESP32-C3 -> coi như mất kết nối
-            if (lastRemoteStatusMs > 0 && (Date.now() - lastRemoteStatusMs) > 12000) {
+            if (state.esp32Connected && lastRemoteActivityMs > 0 && (Date.now() - lastRemoteActivityMs) > 15000) {
                 state.esp32Connected = false;
+                if (!state.simulationMode) {
+                    setConnStatus('offline', 'Không có kết nối ESP32');
+                }
+            } else if (!state.esp32Connected && !state.simulationMode) {
                 setConnStatus('offline', 'Không có kết nối ESP32');
-                renderUI();
-                return;
             }
 
-            if (!state.isRunning) return;
-
-            const totalSec = state.totalHours * 3600;
-            if (state.elapsedSeconds < totalSec) {
-                state.elapsedSeconds += 1;
+            if ((state.esp32Connected || state.simulationMode) && state.isRunning) {
+                const totalSec = state.totalHours * 3600;
+                if (state.elapsedSeconds < totalSec) {
+                    state.elapsedSeconds += 1;
+                }
             }
 
             renderUI();
         }, 1000);
 
         function animateMistLoop(timestamp) {
-            if (state.esp32Connected && state.isRunning) {
+            if ((state.esp32Connected || state.simulationMode) && state.isRunning) {
                 renderMistPlumes(timestamp);
             } else {
                 renderMistPlumes(0);
