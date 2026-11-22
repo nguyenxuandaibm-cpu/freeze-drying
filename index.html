@@ -441,7 +441,7 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">NHIỆT ĐỘ • SHT30</div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">NHIỆT ĐỘ KHOANG SẤY</div>
                         <div class="flex items-baseline gap-1 mt-0.5">
                             <span id="dispTemp" class="text-2xl sm:text-[28px] font-extrabold text-slate-800 tabular-nums leading-tight">29.8</span>
                             <span class="text-sm font-bold text-slate-500">°C</span>
@@ -463,7 +463,7 @@
                         </svg>
                     </div>
                     <div class="min-w-0">
-                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">ĐỘ ẨM • SHT30</div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 truncate">ĐỘ ẨM KHOANG SẤY</div>
                         <div class="flex items-baseline gap-1 mt-0.5">
                             <span id="dispHum" class="text-2xl sm:text-[28px] font-extrabold text-slate-800 tabular-nums leading-tight">35.5</span>
                             <span class="text-sm font-bold text-slate-500">%</span>
@@ -535,7 +535,7 @@
                 <div class="flex items-center gap-2 min-w-0">
                     <span id="sysDot" class="w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0"></span>
                     <span id="sysBadgeText" class="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-700 truncate">
-                        HỆ THỐNG ĐANG SẤY • TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ
+                        HỆ THỐNG ĐANG SẤY • TUẦN HOÀN •
                     </span>
                 </div>
             </div>
@@ -551,7 +551,7 @@
                 </div>
                 <div class="glass-pill px-3 py-1 rounded-full text-slate-700 flex items-center gap-1.5">
                     <span id="connDot" class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
-                    <span id="connText">Đang chờ ESP32</span>
+                    <span id="connText">Đang chờ máy</span>
                 </div>
             </div>
 
@@ -628,10 +628,10 @@
                         <line x1="176" y1="142" x2="176" y2="164" stroke="#475569" stroke-width="2"/>
                         <rect x="163" y="164" width="26" height="32" rx="7" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
                         <circle cx="176" cy="183" r="3.5" fill="#38bdf8"/>
-                        <text x="176" y="209" text-anchor="middle" font-size="9.5" font-weight="800" fill="#1e293b">SHT30</text>
+                        <text x="176" y="209" text-anchor="middle" font-size="9.5" font-weight="800" fill="#1e293b">SENSOR</text>
 
                         <rect x="60" y="185" width="5" height="54" rx="2.5" fill="#475569"/>
-                        <text x="176" y="369" text-anchor="middle" font-size="9.5" font-weight="800" fill="#334155" letter-spacing="0.4">BUỒNG SẤY 6 KHAY • KÍNH 5MM &amp; NHÔM</text>
+                        <text x="176" y="369" text-anchor="middle" font-size="9.5" font-weight="800" fill="#334155" letter-spacing="0.4">KHOANG SẤY TỔ YẾN</text>
                     </g>
 
                     <!-- ================= 2. ỐNG TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ ================= -->
@@ -699,7 +699,7 @@
 
         <!-- Ghi chú chân trang -->
         <footer class="text-center text-[11px] font-semibold text-slate-500 pb-2">
-            Máy Sấy Lạnh Tổ Yến • Tuần hoàn ngược kim đồng hồ • Đồng bộ Firebase ESP32-C3
+           • Máy Sấy Lạnh Tổ Yến •
         </footer>
     </div>
 
@@ -715,7 +715,7 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold text-slate-800">Cài Đặt Máy Sấy Tổ Yến</h2>
-                    <p class="text-[11px] sm:text-xs text-slate-600">Chỉnh nhiệt độ, độ ẩm, thời gian sấy & lịch đèn UV</p>
+                    <p class="text-[11px] sm:text-xs text-slate-600">• nhiệt độ, độ ẩm, thời gian sấy & lịch đèn UV •</p>
                 </div>
                 <button id="closeSettingsBtn" type="button" aria-label="Đóng"
                     class="w-10 h-10 rounded-full bg-white/55 hover:bg-white/85 border border-white/85 flex items-center justify-center text-slate-700 transition cursor-pointer shrink-0 shadow-2xs">
@@ -749,7 +749,7 @@
                     <input id="inputTargetTemp" type="range" min="22" max="35" step="0.5" value="30.0" class="ios-slider">
                     <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-500 mt-1 px-1">
                         <span>22°C</span>
-                        <span>28–31°C (Chuẩn yến)</span>
+                        <span>28–31°C (Nhiệt độ khuyến nghị)</span>
                         <span>35°C</span>
                     </div>
                 </div>
@@ -759,14 +759,14 @@
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-sm font-bold text-slate-800">Độ ẩm mục tiêu</span>
                         <span class="text-sm font-extrabold text-slate-800 bg-white/85 px-3 py-0.5 rounded-full border border-white shadow-2xs">
-                            <span id="valTargetHum">35</span> %
+                            <span id="valTargetHum">30</span> %
                         </span>
                     </div>
-                    <input id="inputTargetHum" type="range" min="25" max="55" step="1" value="35" class="ios-slider">
+                    <input id="inputTargetHum" type="range" min="10" max="50" step="1" value="30" class="ios-slider">
                     <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-500 mt-1 px-1">
-                        <span>25% (Sấy kiệt)</span>
-                        <span>35–40% (Tiêu chuẩn)</span>
-                        <span>55%</span>
+                        <span>10% (Sấy kiệt)</span>
+                        <span>25–35% (Tiêu chuẩn)</span>
+                        <span>50%</span>
                     </div>
                 </div>
 
@@ -794,7 +794,7 @@
                         <div class="min-w-0">
                             <div class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                                 <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-white border border-slate-300 shadow-2xs"></span>
-                                <span class="truncate">Đèn UV Tiệt Trùng (Ánh Sáng Xanh)</span>
+                                <span class="truncate">Đèn UV Tiệt Trùng</span>
                             </div>
                             <div class="text-[11px] text-slate-600">Bật UV ở đầu & cuối chu trình, tắt UV ở giai đoạn sấy giữa</div>
                         </div>
@@ -850,7 +850,7 @@
                 <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3" style="display:none" aria-hidden="true">
                     <div class="min-w-0">
                         <div class="text-xs font-bold text-slate-800">Mô phỏng dữ liệu Live</div>
-                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có ESP32 gửi dữ liệu</div>
+                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có máy gửi dữ liệu</div>
                     </div>
                     <label class="ios-switch">
                         <input id="inputSimMode" type="checkbox">
@@ -1032,7 +1032,7 @@
             const phase = getUvPhase();
             return {
                 active: false,
-                label: phase === 'middle' ? 'UV tắt (giai đoạn sấy giữa)' : 'Chờ ESP32 bật UV'
+                label: phase === 'middle' ? 'UV tắt (giai đoạn sấy giữa)' : 'Chờ máy bật UV'
             };
         }
 
@@ -1154,7 +1154,7 @@
             state.startDehumRelay = false;
             state.uvRunningFromEsp = false;
             if (!state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
         }
 
@@ -1162,7 +1162,7 @@
             lastRemoteActivityMs = Date.now();
             state.esp32Connected = true;
             if (!state.simulationMode) {
-                setConnStatus('online', 'ESP32-C3 Online');
+                setConnStatus('online', 'Đã kết nối với máy');
             }
         }
 
@@ -1254,7 +1254,7 @@
 
         function initFirebaseHook() {
             if (typeof firebase === 'undefined') {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
                 return;
             }
             try {
@@ -1282,7 +1282,7 @@
                 });
             } catch (err) {
                 console.warn('Lỗi khởi tạo Firebase:', err);
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
         }
 
@@ -1514,7 +1514,7 @@
 
             if (activeRun) {
                 if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-teal-400 shrink-0';
-                if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG ĐANG SẤY • TUẦN HOÀN NGƯỢC KIM ĐỒNG HỒ';
+                if (sysBadgeText) sysBadgeText.textContent = 'HỆ THỐNG ĐANG SẤY';
                 if (chamberMist) chamberMist.style.opacity = '0.58';
             } else {
                 if (sysDot) sysDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
@@ -1724,9 +1724,9 @@
             if (state.simulationMode) {
                 setConnStatus('sim', 'Mô phỏng Live');
             } else if (state.esp32Connected) {
-                setConnStatus('online', 'ESP32-C3 Online');
+                setConnStatus('online', 'Đã kết nối với máy');
             } else {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
             renderUI();
         });
@@ -1777,7 +1777,7 @@
             if (state.simulationMode) {
                 setConnStatus('sim', 'Mô phỏng Live');
             } else if (!state.esp32Connected) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
 
             renderUI();
@@ -1793,7 +1793,7 @@
             if (state.esp32Connected && (Date.now() - lastRemoteActivityMs) > ESP_TIMEOUT_MS) {
                 setEsp32Offline();
             } else if (!state.esp32Connected && !state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
 
             if ((state.esp32Connected || state.simulationMode) && state.isRunning) {
@@ -1824,7 +1824,7 @@
                 requestAnimationFrame(animateMistLoop);
             } catch (err) {
                 console.error('Lỗi khởi tạo giao diện:', err);
-                setConnStatus('offline', 'Không có kết nối ESP32');
+                setConnStatus('offline', 'Không có kết nối');
             }
         });
     </script>
