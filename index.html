@@ -544,14 +544,14 @@
             <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 px-1 text-[11px] font-bold">
                 <div id="uvStatusBadge" class="glass-pill px-3 py-1 rounded-full text-blue-700 flex items-center gap-1.5">
                     <span id="uvBadgeDot" class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                    <span id="uvStatusText">Đang chiếu UV (00:30–01:30)</span>
+                    <span id="uvStatusText">Chờ bắt đầu sấy</span>
                 </div>
                 <div class="glass-pill px-3 py-1 rounded-full text-slate-700">
                     Điểm sương: <span id="dispDew" class="text-slate-900 font-extrabold">12.9°C</span>
                 </div>
                 <div class="glass-pill px-3 py-1 rounded-full text-slate-700 flex items-center gap-1.5">
                     <span id="connDot" class="w-2 h-2 rounded-full bg-sky-400 shrink-0"></span>
-                    <span id="connText">Đang chờ Máy</span>
+                    <span id="connText">Đang chờ ESP32</span>
                 </div>
             </div>
 
@@ -699,7 +699,7 @@
 
         <!-- Ghi chú chân trang -->
         <footer class="text-center text-[11px] font-semibold text-slate-500 pb-2">
-           • Máy Sấy Lạnh Tổ Yến •
+            Máy Sấy Lạnh Tổ Yến • Tuần hoàn ngược kim đồng hồ • Đồng bộ Firebase ESP32-C3
         </footer>
     </div>
 
@@ -796,7 +796,7 @@
                                 <span class="w-2.5 h-2.5 rounded-full shrink-0 bg-white border border-slate-300 shadow-2xs"></span>
                                 <span class="truncate">Đèn UV Tiệt Trùng (Ánh Sáng Xanh)</span>
                             </div>
-                            <div class="text-[11px] text-slate-600">Kéo 2 đầu mút để chỉnh giờ bắt đầu & kết thúc (bước 15 phút)</div>
+                            <div class="text-[11px] text-slate-600">Bật UV ở đầu & cuối chu trình, tắt UV ở giai đoạn sấy giữa</div>
                         </div>
                         <label class="ios-switch">
                             <input id="inputUvAuto" type="checkbox" checked>
@@ -804,29 +804,40 @@
                         </label>
                     </div>
 
-                    <div id="uvScheduleBox" class="mt-3 transition-opacity duration-200">
-                        <div class="flex flex-wrap items-center justify-between gap-1 text-xs font-bold bg-white/55 px-3 py-2 rounded-2xl border border-white/85 mb-2">
-                            <span class="text-slate-700">
-                                Bắt đầu: <span id="valUvStart" class="text-slate-900">00:30</span>
-                                – Kết thúc: <span id="valUvEnd" class="text-slate-900">01:30</span>
-                            </span>
-                            <span class="px-2.5 py-0.5 rounded-full bg-white/90 text-slate-800 border border-white text-[11px] shadow-2xs">
-                                Thời lượng: <span id="valUvDuration">60</span> phút
-                            </span>
+                    <div id="uvScheduleBox" class="mt-3 transition-opacity duration-200 space-y-3">
+                        <div class="text-[11px] font-semibold text-slate-700 bg-white/55 border border-white/85 px-3 py-2 rounded-2xl leading-relaxed">
+                            <div>① <b>Đầu chu trình:</b> UV <b class="text-blue-700">BẬT</b> ngay sau khi nhấn Bắt đầu</div>
+                            <div>② <b>Giai đoạn giữa:</b> UV <b class="text-slate-900">TẮT</b> (chỉ hút ẩm, yến không ngả vàng)</div>
+                            <div>③ <b>Cuối chu trình:</b> UV <b class="text-blue-700">BẬT</b> trước khi kết thúc mẻ sấy</div>
                         </div>
 
-                        <div class="dual-range-wrap">
-                            <div class="dual-track-bg"></div>
-                            <div id="uvDualFill" class="dual-track-fill"></div>
-                            <input id="inputUvStart" type="range" min="0" max="1440" step="15" value="30" class="dual-range-input" aria-label="Thời gian bắt đầu chiếu UV">
-                            <input id="inputUvEnd" type="range" min="0" max="1440" step="15" value="90" class="dual-range-input" aria-label="Thời gian kết thúc chiếu UV">
+                        <div>
+                            <div class="flex justify-between items-center mb-1 text-xs font-bold text-slate-700">
+                                <span>UV đầu chu trình</span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-white/90 text-slate-800 border border-white text-[11px] shadow-2xs"><span id="valUvHead">15</span> phút</span>
+                            </div>
+                            <input id="inputUvHead" type="range" min="0" max="30" step="5" value="15" class="ios-slider" aria-label="Số phút bật UV đầu chu trình">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
+                                <span>0 (không bật)</span>
+                                <span>10–15 (khuyến nghị)</span>
+                                <span>30</span>
+                            </div>
                         </div>
 
-                        <div class="flex justify-between text-[10px] font-semibold text-slate-500 px-1 mb-2">
-                            <span>00:00</span>
-                            <span id="uvAxisMid">12:00</span>
-                            <span id="uvAxisMax">24:00 (24h)</span>
+                        <div>
+                            <div class="flex justify-between items-center mb-1 text-xs font-bold text-slate-700">
+                                <span>UV cuối chu trình</span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-white/90 text-slate-800 border border-white text-[11px] shadow-2xs"><span id="valUvTail">15</span> phút</span>
+                            </div>
+                            <input id="inputUvTail" type="range" min="0" max="30" step="5" value="15" class="ios-slider" aria-label="Số phút bật UV cuối chu trình">
+                            <div class="flex justify-between text-[10px] text-slate-500 mt-1 px-1">
+                                <span>0 (không bật)</span>
+                                <span>10–15 (khuyến nghị)</span>
+                                <span>30</span>
+                            </div>
                         </div>
+
+                        <div id="uvPhaseSummary" class="text-[11px] font-bold text-slate-800 bg-white/55 border border-white/85 px-3 py-2 rounded-xl"></div>
 
                         <div class="text-[11px] font-semibold text-slate-700 bg-white/55 border border-white/85 px-3 py-1.5 rounded-xl flex items-center justify-between gap-2">
                             <span>Trạng thái UV hiện tại:</span>
@@ -839,7 +850,7 @@
                 <div class="settings-glass-item p-3.5 rounded-3xl flex items-center justify-between gap-3" style="display:none" aria-hidden="true">
                     <div class="min-w-0">
                         <div class="text-xs font-bold text-slate-800">Mô phỏng dữ liệu Live</div>
-                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có gửi dữ liệu</div>
+                        <div class="text-[10px] text-slate-600">Bật nếu muốn thử giao diện khi chưa có ESP32 gửi dữ liệu</div>
                     </div>
                     <label class="ios-switch">
                         <input id="inputSimMode" type="checkbox">
@@ -905,8 +916,8 @@
             startDehumRelay: false,
             uvRunningFromEsp: false,
             uvAutoEnabled: true,
-            uvStartMin: 30,
-            uvEndMin: 90,
+            uvHeadMin: 15,
+            uvTailMin: 15,
             uvColor: '#3b82f6'
         };
 
@@ -917,7 +928,7 @@
         let lastHeartbeat = null;      // giá trị heartbeat gần nhất ESP32 gửi lên
         let pendingProfileId = null;   // profile vừa gửi, chờ ESP32 xác nhận đã lưu
         let heartbeatSeen = false;     // đã nhận snapshot đầu tiên chưa
-        const ESP_TIMEOUT_MS = 7000;   // quá 7s không đổi heartbeat => ESP32 offline
+        const ESP_TIMEOUT_MS = 10000;  // quá 10s không đổi heartbeat => ESP32 offline
 
         const FIREBASE_CONFIG = {
             databaseURL: 'https://freeze-drying-default-rtdb.firebaseio.com/',
@@ -997,20 +1008,31 @@
             return dp.toFixed(1);
         }
 
+        function getUvPhase() {
+            // Giống hệt logic trên ESP32: ĐẦU = bật, GIỮA = tắt, CUỐI = bật
+            const elapsedSec = state.elapsedSeconds || 0;
+            const totalSec = state.totalHours * 3600;
+            const headSec = state.uvHeadMin * 60;
+            const tailSec = state.uvTailMin * 60;
+            if (headSec > 0 && elapsedSec < headSec) return 'head';
+            if (tailSec > 0 && elapsedSec < totalSec && (totalSec - elapsedSec) <= tailSec) return 'tail';
+            return 'middle';
+        }
+
         function getUvScheduleState() {
             if (!state.uvAutoEnabled) {
                 return { active: false, label: 'Đèn UV tắt' };
             }
             if ((state.esp32Connected || state.simulationMode) && state.isRunning && state.uvRunningFromEsp) {
-                return { active: true, label: 'Đang chiếu UV' };
+                return { active: true, label: getUvPhase() === 'tail' ? 'Đang chiếu UV (cuối chu trình)' : 'Đang chiếu UV (đầu chu trình)' };
             }
-            const elapsedMins = Math.floor((state.elapsedSeconds || 0) / 60);
-            const startM = Math.min(state.uvStartMin, state.uvEndMin);
-            const endM = Math.max(state.uvStartMin, state.uvEndMin);
-            const isInWindow = elapsedMins >= startM && elapsedMins < endM;
+            if (!state.isRunning) {
+                return { active: false, label: 'Chờ bắt đầu sấy' };
+            }
+            const phase = getUvPhase();
             return {
-                active: isInWindow,
-                label: isInWindow ? 'Đang chiếu UV' : 'Chờ lịch UV'
+                active: false,
+                label: phase === 'middle' ? 'UV tắt (giai đoạn sấy giữa)' : 'Chờ ESP32 bật UV'
             };
         }
 
@@ -1104,8 +1126,8 @@
                     targetHum: state.targetHum,
                     totalHours: state.totalHours,
                     uvAuto: state.uvAutoEnabled ? 1 : 0,
-                    uvStartMin: state.uvStartMin,
-                    uvEndMin: state.uvEndMin,
+                    uvHeadMin: state.uvHeadMin,
+                    uvTailMin: state.uvTailMin,
                     updatedAt: Date.now(),
                     ...extraFields
                 };
@@ -1132,7 +1154,7 @@
             state.startDehumRelay = false;
             state.uvRunningFromEsp = false;
             if (!state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối');
+                setConnStatus('offline', 'Không có kết nối ESP32');
             }
         }
 
@@ -1170,7 +1192,7 @@
                 showToast('ESP32 đã nhận & lưu profile — tự chạy theo cài đặt');
             }
 
-            const recentLocalCmd = (Date.now() - lastRemotePushMs) < 2500;
+            const recentLocalCmd = (Date.now() - lastRemotePushMs) < 6000;
 
             // --- Cảm biến: chỉ hiện khi ESP32 báo sensorValid = 1 và có số thật ---
             if (Number(data.sensorValid) !== 1) {
@@ -1207,8 +1229,8 @@
                 if (typeof data.targetHum === 'number') state.targetHum = data.targetHum;
                 if (typeof data.totalHours === 'number') state.totalHours = data.totalHours;
                 if (data.uvAuto !== undefined) state.uvAutoEnabled = Number(data.uvAuto) === 1;
-                if (typeof data.uvStartMin === 'number') state.uvStartMin = data.uvStartMin;
-                if (typeof data.uvEndMin === 'number') state.uvEndMin = data.uvEndMin;
+                if (typeof data.uvHeadMin === 'number') state.uvHeadMin = data.uvHeadMin;
+                if (typeof data.uvTailMin === 'number') state.uvTailMin = data.uvTailMin;
             }
 
             renderUI();
@@ -1383,9 +1405,7 @@
 
             if (uvStatusText) {
                 const uvState = getUvScheduleState();
-                uvStatusText.textContent = active
-                    ? `Đang chiếu UV (${formatMinutesToHHMM(state.uvStartMin)}–${formatMinutesToHHMM(state.uvEndMin)})`
-                    : `${uvState.label} (${formatMinutesToHHMM(state.uvStartMin)}–${formatMinutesToHHMM(state.uvEndMin)})`;
+                uvStatusText.textContent = active ? uvState.label : (state.uvAutoEnabled ? uvState.label : 'Đèn UV tắt');
             }
         }
 
@@ -1398,7 +1418,7 @@
             syncUvVisualState(canAct && uvState.active);
             const readoutEl = document.getElementById('modalUvLiveReadout');
             if (readoutEl) {
-                readoutEl.textContent = isControlAllowed() ? uvState.label : 'Loading...';
+                readoutEl.textContent = isControlAllowed() ? uvState.label : 'Chờ dữ liệu ESP32';
             }
         }
 
@@ -1595,43 +1615,24 @@
         const inputTargetHum = document.getElementById('inputTargetHum');
         const inputTotalHours = document.getElementById('inputTotalHours');
         const inputUvAuto = document.getElementById('inputUvAuto');
-        const inputUvStart = document.getElementById('inputUvStart');
-        const inputUvEnd = document.getElementById('inputUvEnd');
-        const uvDualFill = document.getElementById('uvDualFill');
+        const inputUvHead = document.getElementById('inputUvHead');
+        const inputUvTail = document.getElementById('inputUvTail');
 
-        function syncUvDualRange(changedHandle) {
-            const hours = parseInt(inputTotalHours.value, 10);
-            const maxMin = hours * 60;
-            const minGap = 15;
+        function syncUvDualRange() {
+            const totalMin = parseInt(inputTotalHours.value, 10) * 60;
+            const head = parseInt(inputUvHead.value, 10) || 0;
+            const tail = parseInt(inputUvTail.value, 10) || 0;
 
-            inputUvStart.max = maxMin;
-            inputUvEnd.max = maxMin;
+            document.getElementById('valUvHead').textContent = head;
+            document.getElementById('valUvTail').textContent = tail;
 
-            let startVal = parseInt(inputUvStart.value, 10);
-            let endVal = parseInt(inputUvEnd.value, 10);
-
-            if (endVal > maxMin) { endVal = maxMin; inputUvEnd.value = endVal; }
-            if (startVal > Math.max(0, maxMin - minGap)) { startVal = Math.max(0, maxMin - minGap); inputUvStart.value = startVal; }
-
-            if (changedHandle === 'start' && startVal > endVal - minGap) {
-                startVal = Math.max(0, endVal - minGap);
-                inputUvStart.value = startVal;
-            } else if (changedHandle === 'end' && endVal < startVal + minGap) {
-                endVal = Math.min(maxMin, startVal + minGap);
-                inputUvEnd.value = endVal;
-            }
-
-            const denom = Math.max(1, maxMin);
-            const leftPct = (startVal / denom) * 100;
-            const rightPct = (endVal / denom) * 100;
-            uvDualFill.style.left = leftPct + '%';
-            uvDualFill.style.width = Math.max(0, rightPct - leftPct) + '%';
-
-            document.getElementById('valUvStart').textContent = formatMinutesToHHMM(startVal);
-            document.getElementById('valUvEnd').textContent = formatMinutesToHHMM(endVal);
-            document.getElementById('valUvDuration').textContent = Math.max(0, endVal - startVal);
-            document.getElementById('uvAxisMid').textContent = formatMinutesToHHMM(maxMin / 2);
-            document.getElementById('uvAxisMax').textContent = `${formatMinutesToHHMM(maxMin)} (${hours}h)`;
+            const parts = [];
+            if (head > 0) parts.push(`BẬT ${head} phút đầu (${formatMinutesToHHMM(0)}–${formatMinutesToHHMM(head)})`);
+            if (tail > 0) parts.push(`BẬT ${tail} phút cuối (${formatMinutesToHHMM(Math.max(0, totalMin - tail))}–${formatMinutesToHHMM(totalMin)})`);
+            const summary = document.getElementById('uvPhaseSummary');
+            summary.textContent = parts.length
+                ? `UV: ${parts.join(' · ')} · giữa chu trình TẮT`
+                : 'UV: không bật trong suốt chu trình';
         }
 
         function updateUvBoxState() {
@@ -1665,10 +1666,8 @@
             highlightHourPreset(state.totalHours);
 
             inputUvAuto.checked = state.uvAutoEnabled;
-            inputUvStart.max = state.totalHours * 60;
-            inputUvEnd.max = state.totalHours * 60;
-            inputUvStart.value = state.uvStartMin;
-            inputUvEnd.value = state.uvEndMin;
+            inputUvHead.value = state.uvHeadMin;
+            inputUvTail.value = state.uvTailMin;
             syncUvDualRange();
             updateUvBoxState();
 
@@ -1712,8 +1711,8 @@
             });
         });
 
-        inputUvStart.addEventListener('input', () => syncUvDualRange('start'));
-        inputUvEnd.addEventListener('input', () => syncUvDualRange('end'));
+        inputUvHead.addEventListener('input', syncUvDualRange);
+        inputUvTail.addEventListener('input', syncUvDualRange);
         inputUvAuto.addEventListener('change', () => {
             updateUvBoxState();
             state.uvAutoEnabled = inputUvAuto.checked;
@@ -1758,8 +1757,8 @@
             }
 
             state.uvAutoEnabled = inputUvAuto.checked;
-            state.uvStartMin = parseInt(inputUvStart.value, 10);
-            state.uvEndMin = parseInt(inputUvEnd.value, 10);
+            state.uvHeadMin = parseInt(inputUvHead.value, 10);
+            state.uvTailMin = parseInt(inputUvTail.value, 10);
 
             if (state.esp32Connected) {
                 const pid = Date.now() % 2000000000;
@@ -1768,17 +1767,17 @@
                 setTimeout(() => {
                     if (pendingProfileId === pid) {
                         pendingProfileId = null;
-                        showToast('Chưa nhận xác nhận từ máy — kiểm tra kết nối');
+                        showToast('Chưa nhận xác nhận từ ESP32 — kiểm tra kết nối');
                     }
                 }, 8000);
             } else {
-                showToast('chưa online — cài đặt chưa được gửi');
+                showToast('ESP32 chưa online — cài đặt chưa được gửi');
             }
 
             if (state.simulationMode) {
                 setConnStatus('sim', 'Mô phỏng Live');
             } else if (!state.esp32Connected) {
-                setConnStatus('offline', 'Không có kết nối');
+                setConnStatus('offline', 'Không có kết nối ESP32');
             }
 
             renderUI();
@@ -1794,7 +1793,7 @@
             if (state.esp32Connected && (Date.now() - lastRemoteActivityMs) > ESP_TIMEOUT_MS) {
                 setEsp32Offline();
             } else if (!state.esp32Connected && !state.simulationMode) {
-                setConnStatus('offline', 'Không có kết nối');
+                setConnStatus('offline', 'Không có kết nối ESP32');
             }
 
             if ((state.esp32Connected || state.simulationMode) && state.isRunning) {
@@ -1825,7 +1824,7 @@
                 requestAnimationFrame(animateMistLoop);
             } catch (err) {
                 console.error('Lỗi khởi tạo giao diện:', err);
-                setConnStatus('offline', 'Không có kết nối');
+                setConnStatus('offline', 'Không có kết nối ESP32');
             }
         });
     </script>
